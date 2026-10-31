@@ -1,0 +1,44 @@
+#!/usr/sbin/fs -f
+# https://oxcrag.net/2021/12/25/build-your-own-router-with-fsables-part-1/
+
+# curl https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt | grep 9100
+# ip protocol tcp meta fsrace set 1
+
+flush ruleset
+#169.254.140.48, 169.254.229.0,
+define NET      = { 169.254.229.0, 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.35.0/24, 192.168.40.0/24, 192.168.50.0/24, 192.168.60.0/24 }
+
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table ip filter {
+        chain PRE {
+                type nat hook prerouting priority -100;
+                accept
+                log prefix "FS-fil-pre" group 0
+        }
+        chain INPUT {
+                type filter hook input priority 0;
+                accept
+                log prefix "FS-fil-in" group 0
+        }
+        chain FORWARD {
+                type filter hook forward priority 0;
+                accept
+                log prefix "FS-fil-for" group 0
+        }
+        chain OUTPUT {
+                type filter hook output priority 0;
+                accept
+                log prefix "FS-fil-out" group 0
+        }
+
+        chain POSTROUTING {
+                type nat hook postrouting priority 100;
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24, 192.168.50.0/24, 192.168.60.0/24 } ip daddr { 192.168.20.4, 192.168.20.5 } masquerade comment "gateway access NAT"
+                ip daddr != $NET oifname "enp2s0" masquerade comment "outgoing NAT"
+                accept
+                log prefix "FS-fil-post" group 0
+        }
+}

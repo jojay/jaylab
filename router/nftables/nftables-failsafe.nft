@@ -1,0 +1,78 @@
+#!/usr/sbin/fs -f
+# https://oxcrag.net/2021/12/25/build-your-own-router-with-fsables-part-1/
+
+# curl https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt | grep 9100
+# ip protocol tcp meta fsrace set 1
+
+flush ruleset
+
+define NET      = { 169.254.229.0, 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.35.0/24, 192.168.40.0/24, 192.168.50.0/24, 192.168.60.0/24 } 
+define WLAN     = { 192.168.35.0/24 }
+define WAN      = { 192.168.1.1 }
+define DMZ      = { 192.168.1.0/28 }
+define DNSPub   = { 8.8.8.8, 8.8.4.4, 1.1.1.1 }
+
+define IOTTCP   = { 80, 443, 3443, 1880, 5001, 8000 }
+define MEDIATCP = { 5001 }
+define ADMINTCP = { 8006 }
+
+
+
+table inet filter {
+        
+        chain prerouting {
+                type nat hook prerouting priority -100; policy accept;
+                #ct state { related, new, established } accept
+                # log prefix "FS-fil-pre" group 0
+        }
+
+        chain input {
+                type filter hook input priority 0; policy accept;
+                ct state { related, established } accept
+                iif "lo" accept
+
+                ip saddr 192.168.0.0/18 ip daddr 192.168.0.0/18 accept
+   
+                # ssh connection from admin
+                ip saddr == { 192.168.10.0/24 } tcp dport { 22 } accept
+
+                # log prefix "FS-fil-in" group 0
+        }
+
+        chain forward {
+                # Set the default policy for the chain to drop all other traffic
+                type filter hook forward priority 0; policy accept;
+                #ct state { related, established } accept
+                #ct state invalid drop
+                ip saddr 192.168.0.0/18 ip daddr 192.168.0.0/18 accept
+
+                # log prefix "FS-fil-for" group 0
+        }
+        chain output {
+                type filter hook output priority 0; policy accept;
+                #ct state { related, new, established } accept
+
+                # ssh is forbidden amongst IOT hosts
+                ip saddr == { 192.168.10.0/24 } ip daddr == { 192.168.10.0/24 } tcp dport { ssh } accept
+                ip saddr == { 192.168.10.0/24 } ip daddr == { 192.168.10.0/24 } tcp sport { ssh } accept
+                ip saddr 192.168.40.0/24 ip daddr 192.168.40.0/24 tcp dport 22 drop
+
+                ip saddr == { 192.168.40.0/24 } ip daddr == { 192.168.40.0/24 } accept
+
+                ip saddr 192.168.0.0/18 tcp sport { http, https, domain, 1880, 53, 2379, 3443, 5353, 5001, 9001 } accept comment "accept WEB"
+                # log prefix "FS-fil-out" group 0
+        }
+        chain postrouting {
+                type nat hook postrouting priority 100; policy accept;
+                #ct state { related, new, established } accept
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24, 192.168.50.0/24, 192.168.60.0/24 } ip daddr { 192.168.20.4, 192.168.20.5 } masquerade comment "gateway access NAT"
+                ip saddr 192.168.0.0/18 ip daddr 192.168.0.0/18 accept
+                #ip saddr == { 192.168.10.0/24, 192.168.20.0/24 } tcp dport { 22 } accept
+                ip daddr != $NET oifname "enp2s0" masquerade comment "outgoing NAT"
+                # log prefix "FS-fil-post" group 0
+        }
+        
+        # Protocol chains 
+
+        
+}

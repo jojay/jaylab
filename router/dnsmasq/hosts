@@ -1,0 +1,75 @@
+# list of static hosts
+127.0.0.1         localhost
+
+# DMZ 192.168.2.0/28
+192.168.2.4       waf.jaylab.local waf dokuwikiwaf
+fd38:21a1:1b97:2::4         waf.jaylab.local waf dokuwikiwaf
+
+192.168.3.6       web.jaylab.local web dokuwikiweb
+fd38:21a1:1b97:3::6         web.jaylab.local web dokuwikiweb
+
+#  subnet 10 - admin    
+192.168.10.1      cisco16
+fd38:21a1:1b97:10::1        cisco16
+192.168.10.2      cisco8
+fd38:21a1:1b97:10::2        cisco8
+192.168.10.16     cisco162
+fd38:21a1:1b97:10::10       cisco162
+192.168.10.3      firewall
+fd38:21a1:1b97:10::3        firewall
+192.168.10.4      proxmox
+fd38:21a1:1b97:10::4        proxmox
+192.168.10.5      proxmoxsvc
+fd38:21a1:1b97:10::5        proxmoxsvc
+192.168.10.6      dnsmasq
+fd38:21a1:1b97:10::6        dnsmasq
+192.168.10.7      proxmox2
+fd38:21a1:1b97:10::7        proxmox2
+192.168.10.8      proxmox2-2
+fd38:21a1:1b97:10::8        proxmox2-2
+192.168.10.9      proxmox2-3
+fd38:21a1:1b97:10::9        proxmox2-3
+192.168.10.10     proxmox2-4
+fd38:21a1:1b97:10::a        proxmox2-4
+192.168.10.11     proxmox2-5
+fd38:21a1:1b97:10::b        proxmox2-5
+192.168.10.12     proxmox2-6
+fd38:21a1:1b97:10::c        proxmox2-6
+192.168.10.13     proxmox3
+fd38:21a1:1b97:10::d        proxmox3
+192.168.10.14     proxmox3svc
+fd38:21a1:1b97:10::e        proxmox3svc
+192.168.10.15     pbs
+fd38:21a1:1b97:10::f        pbs
+
+192.168.10.241   papadesk  
+
+192.168.40.241   cloudflared
+192.168.40.125   erpnext
+192.168.40.118   erpnext-old
+
+192.168.40.130  wormate
+#  subnet 20 - general
+192.168.20.4      papalapap # fritzbox alt DSL
+192.168.20.5      papalapin # fritzbox neu Kabel 0C:C5:74:9A:EB:5B
+ 
+192.168.20.241    papadesk
+
+fd38:21a1:1b97:20::4        papalapap
+fd38:21a1:1b97:20::6        dnsmasq
+
+# subnet 30 - familie
+192.168.30.7      drucker
+fd38:21a1:1b97:30::7        drucker
+fd38:21a1:1b97:30::6        dnsmasq
+
+#  subnet 40 - iot
+fd38:21a1:1b97:40::6        dnsmasq
+
+#  subnet 50 - data
+192.168.50.1      synstation 
+fd38:21a1:1b97:50::1        synstation
+fd38:21a1:1b97:50::6        dnsmasq
+
+#  subnet 60 - guests
+fd38:21a1:1b97:60::6        dnsmasq

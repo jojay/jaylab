@@ -1,0 +1,369 @@
+#!/usr/sbin/nft -f
+# https://oxcrag.net/2021/12/25/build-your-own-router-with-nftables-part-1/
+
+# curl https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt | grep 9100
+# ip protocol tcp meta nftrace set 1
+
+flush ruleset
+
+define NET               = { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.35.0/24, 192.168.40.0/24, 192.168.50.0/24, 192.168.60.0/24 } 
+define WLAN              = { 192.168.35.0/24 }
+
+# WAN: 192.168.1.0/30
+define WAN               = { 192.168.1.1 }
+define DMZ_FROM_WAN      = { 192.168.2.0/28 }
+define DMZ_TO_LAN        = { 192.168.3.0/28 }
+define DNSPub            = { 8.8.8.8, 8.8.4.4, 1.1.1.1 }
+
+define IOTTCP            = { 80, 443, 3443, 1880, 5001, 8000, 8883 }
+define MEDIATCP          = { 5001 }
+define ADMINTCP          = { 8006 }
+
+
+
+table ip filter {
+        
+        # hp-pdl-datastr     9100        udp    PDL Data Streaming Port
+        # pdl-datastream     9100        tcp    Printer PDL Data Stream
+        # sec-t4net-srv      9400        tcp    Samsung Twain for Network
+        # sec-t4net-srv      9400        udp    Samsung Twain for Network
+        # snmp                161        udp    SNMP Achtungs auch tcp wird vom Drucker verwendet.
+        set druckerport_set {
+            type inet_proto . inet_service 
+            counter
+            elements = {
+              tcp . 9100, 
+              tcp . 9400, 
+              tcp . 161 ,
+              udp . 9100, 
+              udp . 9400, 
+              udp . 161  
+            }
+        }
+
+       # set entertain_range{
+       #     type inet_service
+       #     elements = { 37021-37026 }
+       # }
+
+        set entertain_set {
+            type inet_proto . inet_service 
+            elements = {
+              tcp . 5200, 
+              tcp . 37021, 
+              tcp . 49000,
+              udp . 123,
+              udp . 37026
+            }    
+        }
+
+        #chain prerouting_tracing {
+        #        type nat hook prerouting priority -101; policy accept;
+        #        ip protocol tcp meta nftrace set 1
+        #       # log prefix "fil-pre-trace" group 0
+        #}
+
+        chain prerouting {
+                type nat hook prerouting priority -100; policy accept;
+                #ip protocol tcp meta nftrace set 1
+                #log prefix "fil-pre-start" group 0
+                # decomment for debugging only
+                #ct state { related, established } accept
+                #ct state invalid drop
+
+                # only accept connections to iot subnet from admin net. Whatch out for output rule too.
+                #ip saddr != { 192.168.10.0/24, 192.168.20.0/24 } ip daddr 192.168.40.0/24 tcp dport 22 drop
+
+                ip saddr == $DMZ_TO_LAN jump dmz
+
+                # DHCP
+                udp dport { 67, 68 } jump dhcp
+                
+                # drop netbios
+                udp dport 137 drop
+                udp sport 137 drop
+
+                # allow bosch eyes to use port
+                udp dport 123 ether saddr 64:da:a0:08:92:ab accept
+                tcp dport 42000 ether saddr 64:da:a0:08:92:ab accept
+                # eyes end 
+
+                meta l4proto . th dport @entertain_set ether saddr == c4:86:e9:38:a5:8a jump entertain
+
+                # allow my fairphone to access synology apps check forward for tcp 8001 port
+                ether saddr fa:89:17:7d:82:d6 tcp dport 5001 accept
+
+                # DNSPub to Google and Cloudflare --> also tcp 853
+                #ip saddr != { $NET, $WLAN } ip daddr { $DNSPub } udp dport { 53 } drop
+                #ip saddr != { $NET, $WLAN } ip daddr { $DNSPub } tcp dport { 853 } drop
+
+                ip daddr $DNSPub udp dport { 53 }  accept
+                ip daddr $DNSPub tcp dport { 853 } accept
+
+                # drop ping 
+                ip saddr != { $NET, $WLAN, 169.254.229.0/16 } ip protocol { igmp, icmp } drop
+                ip saddr == { 192.168.10.0/24, $DMZ_TO_LAN } ip daddr == $DMZ_TO_LAN ip protocol { igmp, icmp, 80 } accept
+                # accept whois protocol
+                meta l4proto tcp th dport 43 accept
+                
+                
+                ip daddr { 224.0.0.0/4, 255.255.255.255 } jump multicast
+
+                meta l4proto . th dport @druckerport_set jump drucker
+                meta l4proto . th sport @druckerport_set jump drucker
+
+                # accept traffic from admin and familie to iot services
+                ip saddr != { 192.168.10.0/24, 192.168.30.0/24 } ip daddr == { 192.168.40.0/24 } tcp dport { $IOTTCP } drop
+                ip saddr != { 192.168.10.0/24, 192.168.30.0/24 } ip daddr == { 192.168.40.0/24 } udp dport { 8883 } drop
+                # accept admin access to Media net 
+                ip saddr != { 192.168.10.0/24, 192.168.30.0/24 } ip daddr == { 192.168.50.0/24 } tcp dport { $MEDIATCP } drop
+
+                # Accept cifs mount admin and paperless for filehare between paperless and synstation
+                tcp dport { 445, 139 } jump cifs
+
+                # the only one that may establish ssh connections must be comming from admin subnet
+                ip saddr == { 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24, 192.168.50.0/24, 192.168.60.0/24 } ip daddr $NET ip protocol 22 drop comment "only from admin allowed"
+
+                # restrict access to proxmox ui to admin subnet
+                ip saddr != { 192.168.10.0/24 } ip daddr 192.168.10.0/24 tcp dport { 8006 } drop
+
+                # accept traffic from 10 / 30?? / 40 to ingress on k8s netbox svc
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24 } ip daddr 192.168.49.2 tcp dport { 80 } accept
+
+                # accept traffic from admin to general speedport / fritz.box
+                #ip saddr != { 192.168.10.0/24 } ip daddr { 192.168.20.4, 192.168.20.5 } drop
+
+                log prefix "fil-pre" group 0
+        }
+
+        chain input {
+                type filter hook input priority 0; policy drop;
+                iif "lo" accept
+
+                ct state { related, established } accept
+                #ct state invalid drop
+               
+                meta l4proto icmp accept
+
+                # DHCP
+                udp dport { 67, 68 } jump dhcp
+
+                ip saddr { $NET } ip daddr 224.0.0.0/4 accept
+                
+                meta l4proto . th dport @druckerport_set jump drucker
+                meta l4proto . th sport @druckerport_set jump drucker
+
+                ip saddr 192.168.10.0/24 ip daddr 192.168.20.0/24 accept
+                ip saddr 192.168.10.0/24 ip daddr 192.168.30.0/24 accept
+                ip saddr 192.168.10.0/24 ip daddr 192.168.40.0/24 accept
+                ip saddr 192.168.10.0/24 ip daddr 192.168.50.0/24 accept
+                ip saddr 192.168.10.0/24 ip daddr 192.168.60.0/24 accept
+
+                #ip saddr 192.168.20.0/24 ip daddr 192.168.10.0/24 accept
+
+                #ip saddr 192.168.20.0/24 ip daddr 192.168.30.0/24 accept
+                #ip saddr 192.168.30.0/24 ip daddr 192.168.20.0/24 accept
+
+                ip saddr 192.168.30.0/24 ip daddr 192.168.20.0/24 accept
+                ip saddr 192.168.30.0/24 ip daddr 192.168.40.0/24 accept
+                ip saddr 192.168.30.0/24 ip daddr 192.168.50.0/24 accept
+                ip saddr 192.168.30.0/24 ip daddr 192.168.60.0/24 accept
+
+                ip saddr 192.168.40.0/24 ip daddr 192.168.20.0/24 accept
+                ip saddr 192.168.40.0/24 ip daddr 192.168.30.7 accept
+                ip saddr 192.168.40.0/24 ip daddr 192.168.50.0/24 accept
+                
+                ip saddr 192.168.50.0/24 ip daddr 192.168.20.0/24 accept
+                #ip saddr 192.168.50.0/24 ip daddr 192.168.30.0/24 accept
+                ip saddr 192.168.50.0/24 ip daddr 192.168.40.0/24 accept
+
+                # ip saddr 192.168.50.0/24 ip daddr 192.168.60.0/24 accept
+                ip saddr 192.168.60.0/24 ip daddr 192.168.20.0/24 accept
+
+                # ssh connection from admin
+                ip saddr == { 192.168.10.0/24 } tcp dport { 22 } accept
+                tcp dport 22 drop
+
+                log prefix "fil-in" group 0
+        }
+
+        chain forward {
+                # Set the default policy for the chain to drop all other traffic
+                type filter hook forward priority 0; policy drop;
+                #ct state { related, established } accept # currently with new due to issues with entertain
+                #ct state invalid drop
+                ip saddr 192.168.0.0/18 ip daddr 192.168.0.0/18 accept
+                
+                #accept ping 
+                ip saddr == { $NET, $WLAN, 169.254.229.0/16 } ip protocol { igmp, icmp } accept
+                meta l4proto tcp th dport 43 accept
+               
+                ip saddr == { 192.168.10.0/24 } tcp dport { ssh } accept
+                ip saddr == { 192.168.10.0/24 } tcp sport { ssh } accept
+
+                tcp dport { 445, 139 } jump cifs
+                
+                meta l4proto . th dport @druckerport_set jump drucker
+                meta l4proto . th sport @druckerport_set jump drucker
+                
+                # web
+                ip saddr { $NET, $WLAN } tcp dport { 80, 443 } accept
+                ip saddr { 192.168.10.0/24 } ip daddr { 192.168.50.1 } tcp dport { 5001 } accept
+                # dns 
+                ip saddr { $NET, $WLAN } udp dport { 53 } accept
+                # imap
+                ip saddr { $NET, $WLAN } tcp dport { 993 } accept
+
+                # allow bosch eyes to use port
+                udp dport 123 ether saddr 64:da:a0:08:92:ab accept
+                tcp dport 42000 ether saddr 64:da:a0:08:92:ab accept
+                # eyes end 
+
+                meta l4proto . th dport @entertain_set ether saddr == c4:86:e9:38:a5:8a jump entertain
+
+                # allow my fairphone to access synology apps
+                ether saddr fa:89:17:7d:82:d6 tcp dport 5001 accept
+
+                # DLNA streaming
+                # Add a rule to the chain to allow DLNA traffic from 192.168.30.0/24 to 192.168.50.0/24
+                ip saddr { 192.168.30.0/24 } ip daddr 192.168.50.0/24 tcp dport { 80, 1900-1905 } accept
+                ip saddr { 192.168.30.0/24 } ip daddr 192.168.50.0/24 udp dport { 1900-1905 } accept
+                ip saddr { 192.168.30.0/24 } ip daddr 224.0.0.0/4 accept
+                # End DLNA
+
+                # accept traffic from admin to general speedport / fritz.box
+                ip saddr == { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24, 192.168.50.0/24, 192.168.60.0/24, } ip daddr { 192.168.20.4, 192.168.20.5 } accept
+
+                ip saddr { 192.168.10.0/24, 192.168.30.0/24 } ip daddr { 192.168.40.0/24 } tcp dport { http, https, 1880, 2379, 3443, 8000 } accept
+                ip saddr { 192.168.10.0/24, 192.168.30.0/24 } ip daddr { 192.168.40.0/24 } udp dport { 8883 } accept
+
+                log prefix "fil-for" group 0
+        }
+        chain output {
+                type filter hook output priority 0; policy accept;
+                #ct state { related, established } accept
+
+                #ip saddr == { 192.168.10.0/24, 192.168.20.0/24 } tcp dport { 22 } accept
+
+                # DHCP
+                udp sport { 67, 68 } jump dhcp
+
+                # ssh is forbidden amongst IOT hosts
+                ip saddr == { 192.168.10.0/24 } ip daddr == { 192.168.10.0/24 } tcp dport { ssh } accept
+                ip saddr == { 192.168.10.0/24 } ip daddr == { 192.168.10.0/24 } tcp sport { ssh } accept
+                
+                ip saddr 192.168.40.0/24 ip daddr 192.168.40.0/24 tcp dport 22 drop
+
+                ip saddr 192.168.40.0/24 ip daddr 192.168.40.0/24 accept
+                
+                
+                ip saddr == { $NET, $WLAN, 169.254.229.0/16 } ip protocol { igmp, icmp } accept
+
+                ip saddr $NET tcp sport { http, https, domain, 1880, 53, 2379, 3443, 5353, 5001, 9001 } accept comment "accept WEB"
+                log prefix "fil-out" group 0
+        }
+        chain postrouting {
+                type nat hook postrouting priority 100; policy accept;
+                #ct state { related, established } accept
+
+                # accept ssh connections from admin subnet
+                ip saddr == 192.168.10.0/24 tcp sport 22 accept
+
+                meta l4proto icmp accept
+
+                # decomment for debugging only
+                
+
+                #type nat hook postrouting priority -150; policy accept;
+
+                udp sport { 67, 68 } jump dhcp
+
+                meta l4proto . th dport @druckerport_set jump drucker
+                meta l4proto . th sport @druckerport_set jump drucker
+
+                tcp dport { 445, 139 } jump cifs
+               
+                # accept traffic from admin and familiie to iot services
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24 } ip daddr == { 192.168.40.0/24 } tcp dport { $IOTTCP } accept
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24 } ip daddr == { 192.168.40.0/24 } udp dport { 8883 } accept
+                # accept admin access to Media net 
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24 } ip daddr == { 192.168.50.0/24 } tcp dport { $MEDIATCP } accept
+
+                # accept traffic from 10 / 30?? / 40 to ingress on k8s netbox svc
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.30.0/24 } ip daddr 192.168.49.2 tcp dport { 80 } accept
+
+                # SNAT access to the upstream gateways for subnets that the consumer router
+                # does not have routes back to.
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24, 192.168.50.0/24, 192.168.60.0/24 } ip daddr { 192.168.20.4, 192.168.20.5 } masquerade comment "gateway access NAT"
+
+                # accept traffic to dns 
+                ip saddr == { $NET } udp dport { 53 } accept
+
+                ip saddr 192.168.0.0/18 ip daddr 192.168.0.0/18 accept
+                #ip saddr == { 192.168.10.0/24, 192.168.20.0/24 } tcp dport { 22 } accept
+                ip daddr != { $NET } oifname "enp2s0" masquerade comment "outgoing NAT"
+                log prefix "fil-post" group 0
+        }
+        
+        # Protocol chains 
+
+        chain multicast {
+                meta l4proto 2 accept
+                ip saddr == { 169.254.229.0/16 } udp dport { 5353 } accept
+                # allow multicast adresses to be send out from iot,  net
+                ip saddr != { $NET, $WLAN } ip daddr { 224.0.0.0/4, 255.255.255.255 } tcp dport { 80, 1900-1905, 9400 } drop
+                ip saddr != { $NET, $WLAN } ip daddr { 224.0.0.0/4, 255.255.255.255 } udp dport { 1900-1905, 3289, 5353-5355 } drop
+                ip saddr == { $NET, $WLAN } ip daddr { 224.0.0.0/4, 255.255.255.255 } udp sport { 5353 } udp dport { 5353-5355 } accept
+                ip saddr == { $NET, $WLAN } ip daddr { 224.0.0.0/4, 255.255.255.255 } udp dport { 5353 } accept
+                
+                # End allow multicast
+                log prefix "chain-multicast" group 0
+        }
+
+        chain entertain {
+                 ether saddr c4:86:e9:38:a5:8a udp dport { 123, 37026 } accept
+                 ether saddr c4:86:e9:38:a5:8a udp sport { 1900 } accept
+                 ether saddr c4:86:e9:38:a5:8a tcp dport { 5200, 37021, 49000 } accept
+                 log prefix "chain-entertain" group 0
+        }
+
+        chain drucker {
+                # Drucker discovery
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } udp dport 161 accept
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } tcp dport 161 accept
+                ip saddr == { 192.168.30.7 } ip daddr { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } udp dport 161 accept
+                ip saddr == { 192.168.30.7 } ip daddr { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } tcp dport 161 accept
+
+                ip saddr != { 192.168.10.0/24 } ip daddr { 192.168.30.7 } tcp dport 80 drop
+                # allow client interaction with drucker          
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } ip daddr 192.168.30.7 tcp dport { 9100, 9400 } accept
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } ip daddr 192.168.30.7 udp dport { 9100, 9400 } accept
+
+                # allow drucker discovery sport:
+                ip saddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } ip daddr 192.168.30.7 udp sport 3702 accept
+                ip saddr 192.168.30.7 ip daddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } tcp sport 161  accept
+                ip saddr 192.168.30.7 ip daddr == { 192.168.10.0/24, 192.168.30.0/24, 192.168.40.0/24 } udp sport 161  accept
+                # end drucker
+                log prefix "chain-drucker" group 0
+        }
+
+        chain cifs {
+                # Accept cifs mount admin and paperless for filehare between paperless win10-plscan and synstation
+                # microsoft-ds        445
+                ip saddr == { 192.168.10.0/24, 192.168.40.157, 192.168.40.225 } ip daddr 192.168.50.1 tcp dport { 139, 445 } accept
+                ip saddr == { 192.168.10.0/24, 192.168.40.157, 192.168.40.225 } ip daddr 192.168.50.1 udp dport { 139 } accept
+                log prefix "chain-cifs" group 0
+        }
+
+        chain dhcp {
+                # DHCP
+                ip saddr != { $NET, $WLAN } udp dport { 67, 68 } drop
+                ip daddr 255.255.255.255 udp sport { 67 } udp dport { 68 } accept
+                log prefix "chain-dhcp" group 0
+        }
+
+        chain dmz {
+                iif != "enp2s2" drop
+                log prefix "chain-dmz" group 0
+        }
+}
