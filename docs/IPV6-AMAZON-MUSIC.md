@@ -92,8 +92,47 @@ ein eigener Nachweis neben den Infrastrukturtests.
 
 ## Aktivierungsstand
 
-Kandidat und Original sind mit vollständigen Include-Kopien erfolgreich auf
-Syntax geprüft. Die Aktivierung und Nachher-Ergebnisse werden nachgetragen.
+**Erste Korrektur abgeschlossen und vom Betreiber bestätigt**, 1. November
+2026, 13:55 MEZ. Beide Anwendungen funktionieren nach erneutem Verbinden mit
+`papalapap`: Amazon-Music-Suche und Netflix. Die automatische Rücknahme wurde
+nach Abnahme aufgehoben und als inaktiv geprüft.
+
+| Nachweis | Ergebnis |
+| --- | --- |
+| Original und Kandidat mit vollständigen Include-Kopien, dnsmasq 2.91 | Beide Syntaxprüfungen bestanden |
+| Dienst und persistente Datei in CT 101 | Dienst aktiv; Kandidaten-Prüfsumme nach Aktivierung unverändert |
+| DNS über Link-Local an allen sechs Schnittstellen, interne A- und externe AAAA-Abfragen, jeweils UDP/TCP | 24 von 24 erfolgreich |
+| DNS über IPv4, UDP und TCP | 2 von 2 erfolgreich |
+| Passive Aufnahme nach Aktivierung | Router-Lifetime null und schnittstelleneigene Link-Local-RDNSS an fünf sendenden DNS-Schnittstellen nachgewiesen |
+| Gesonderte Aufnahme an enp6s0 | Im 16-Sekunden-Fenster kein ausgehendes RA erfaßt; deshalb kein Paketnachweis für diese Schnittstelle. Ihre persistente RA-Konfiguration hat ebenfalls Lifetime null. |
+| Temporäre /128-Prüfroute im DNS-Netzraum über den vorhandenen Fritz-Router | IPv6-HTTPS zum Kontrollziel erfolgreich, HTTP 200 und über 1 MB übertragen; Prüfroute anschließend nachweislich entfernt |
+| Anwendungsprüfung auf dem betroffenen Android-Gerät | Betreiber bestätigt: Amazon Music und Netflix funktionieren wieder |
+| Repository gegen aktivierte Konfiguration | Sämtliche aktiven Direktiven stimmen überein; Kommentare können abweichen |
+
+Sicherungs- und Rückwegverzeichnis auf Host und DNS-LXC:
+`/root/jaylab-ipv6-ra-20261101T124829Z`. Der Host enthält außerdem die
+gesicherten Dateiinhalte und das Abnahmeprotokoll. Der aktive Kandidat hat
+SHA256 `778f6fc529fa98b343f4e7ffd8168e86cb3477b90e751c03522d6180693570c1`.
+Bei einer späteren Rücknahme dieses Stands kann über den geprüften Hostzugang
+`python3 /root/jaylab-ipv6-ra-20261101T124829Z/rollback.py` aufgerufen werden;
+das Werkzeug verweigert das Überschreiben inzwischen fremd geänderter Inhalte.
+Die Rücknahme stellt auch die alten falschen Routerhinweise wieder her und ist
+deshalb nur ein Betriebsrückweg, keine sichere Zielkonfiguration.
+
+## Verbleibende IPv6-Arbeit
+
+Der DNS-LXC wählt nach Wegfall der falschen eigenen RA-Routen weiterhin seine
+statische Default-Route über `fd38:21a1:1b97:10::3`. CT 103 besitzt jedoch
+keine IPv6-Default-Route ins Internet. Die erfolgreiche gesonderte Fritz-Probe
+belegt, daß der vorhandene direkte IPv6-Internetpfad grundsätzlich funktioniert.
+Die dauerhaft richtige ausgehende Route des DNS-LXC ist noch zu bereinigen;
+seine IPv4-DNS-Upstreams funktionieren bereits. Keine temporäre Prüfroute wurde
+als dauerhafte Lösung zurückgelassen.
+
+Auch gemeinsame externe Layer-2-Pfade, mehrfach gelernte Präfixe, die
+Präfixweitergabe des `/59` und die Ursache des fehlenden RA-Paketnachweises an
+`enp6s0` sind noch offen. Die erfolgreiche App-Korrektur schließt diese Punkte
+und das Gesamtziel Z05 nicht ab. U01 bleibt wie beauftragt zurückgestellt.
 
 Technische Referenzen: [dnsmasq-Handbuch](https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html)
 zu `ra-param`, IPv6-DNS-Platzhaltern und SIGHUP sowie

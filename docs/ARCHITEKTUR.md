@@ -54,6 +54,12 @@ fünf Schnittstellen, und eine gemeinsame Router-MAC wird über alle sechs
 physischen NICs gelernt. Die externen Grenzen sind deshalb weiterhin ungeklärt.
 Der obige Zusammenhang bleibt ein schematischer, kein bestätigter Kabelplan.
 
+Anschließend wurden die falsche IPv6-Standardrouterrolle des DNS-LXC und seine
+IPv6-DNS-Ankündigungen berichtigt. Der Betreiber bestätigt wieder funktionierende
+Amazon-Music-Suche und Netflix im WLAN `papalapap`. Abnahme und verbleibende
+Routenfragen stehen im [IPv6-Protokoll](IPV6-AMAZON-MUSIC.md). U01 wurde zugunsten
+dieser Fehlerbehebung zurückgestellt.
+
 ## Dateibestand
 
 `router/dnsmasq/dnsmasq.conf` beschreibt sechs logische Schnittstellen `enp1s0`

@@ -15,6 +15,7 @@ Die Segmentierung soll mit getrennten physischen Ethernet-Pfaden ohne VLANs erfo
 | [Inventar](inventory/infrastruktur.json) | Maschinenlesbare Geräte, Segmente und sechs noch zuzuordnende Ports |
 | [Ziele](docs/ZIELE.md) | Prioritäten, Abhängigkeiten und überprüfbare Abschlußkriterien |
 | [Erster Überarbeitungsschritt](docs/ERSTER-UEBERARBEITUNGSSCHRITT.md) | Live belegter Handlungsbedarf und U01: Verwaltung gegenüber IoT und Gästen schützen |
+| [IPv6-Korrektur](docs/IPV6-AMAZON-MUSIC.md) | Behobene Router-/DNS-Ankündigungen, bestätigte Amazon-/Netflix-Funktion und verbleibende IPv6-Arbeit |
 | [Befunde](docs/BEFUNDE.md) | Erste Risiken aus den Dateien; noch kein vollständiges Live-Audit |
 | [Netzfreigaben](docs/NETZFREIGABEN.md) | Entwurf der Verkehrsregeln und ihrer Abnahme |
 | [Betrieb](docs/BETRIEB.md) | Bestandsaufnahme, Deployment und Wiederherstellung |
@@ -49,9 +50,10 @@ Ein Netzverbot der Ausführungsumgebung ist kein Nachweis für einen Gerätefehl
 ## Nächster Arbeitsschritt
 
 Der Betreiber hat [U01](docs/ERSTER-UEBERARBEITUNGSSCHRITT.md) zurückgestellt.
-Aktuell hat **Z05** Vorrang: IPv6 und DNS für die unzuverlässige Amazon-Music-Suche
-und Netflix im WLAN `papalapap` untersuchen und gezielt berichtigen. Der
-funktionierende Zugriff im Gast-WLAN dient als Vergleich. Der Zugangsteil von
-Z01 und die lokale NIC-/Bridge-/LXC-Zuordnung sind nachgewiesen; die externen
-Netzpfade bleiben teilweise offen. Z09 behandelt weiterhin den festen
-Dual-Stack-Anschluß und den bestehenden Cloudflare-Tunnel.
+Unter **Z05** wurde die [erste IPv6-Korrektur](docs/IPV6-AMAZON-MUSIC.md)
+aktiviert und geprüft. Amazon-Music-Suche und Netflix im WLAN `papalapap`
+funktionieren laut anschließender Bestätigung des Betreibers wieder. Weitere
+IPv6-Routen-/RA-Fragen bleiben dokumentiert; Z05 ist deshalb noch in Arbeit.
+Der Zugangsteil von Z01 und die lokale NIC-/Bridge-/LXC-Zuordnung sind
+nachgewiesen; externe Netzpfade bleiben teilweise offen. Z09 behandelt den
+festen Dual-Stack-Anschluß und den bestehenden Cloudflare-Tunnel.

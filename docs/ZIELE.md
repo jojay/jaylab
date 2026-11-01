@@ -33,12 +33,17 @@ Planungsziel und erteilt keine Freigabe für öffentliche Dienste oder DNS-Ände
 ## Erster Arbeitsauftrag
 
 Der Betreiber hat U01 am 1. November 2026 ausdrücklich zurückgestellt.
-Vorrang hat Z05: Amazon-Music-Suche in der Android-App und Netflix sind im
-normalen WLAN `papalapap` unzuverlässig; im Gast-WLAN funktioniert die Musiksuche
-laut Betreiber. IPv6-Routen, Router Advertisements und DNS zunächst vergleichen.
-Ein zeitlicher Zusammenhang oder dieser Vergleich allein beweist noch keine
-IPv6-Ursache. Belegte Fehler gezielt mit Rückweg beheben und die Anwendungen
-anschließend auf dem betroffenen Gerät prüfen.
+Vorrang hat Z05. Die [erste IPv6-/DNS-Korrektur](IPV6-AMAZON-MUSIC.md) ist
+abgeschlossen: Der nicht weiterleitende DNS-LXC bietet sich nicht mehr als
+Standardrouter an und nennt erreichbare IPv6-DNS-Adressen. Der Betreiber hat
+anschließend bestätigt, daß Amazon-Music-Suche in der Android-App und Netflix
+im normalen WLAN `papalapap` wieder funktionieren. 26 DNS-Prüfungen bestanden;
+der automatische Rücklauf wurde nach Abnahme aufgehoben.
+
+Z05 bleibt wegen weiterer IPv6-Routen-/RA-Fragen in Arbeit. Insbesondere führt
+die statische IPv6-Default-Route des DNS-LXC noch zum Firewall-LXC ohne
+IPv6-Internetroute; der direkte Fritz-Pfad wurde getrennt erfolgreich geprüft.
+Gemeinsame Netzpfade und Präfixweitergabe bleiben vor weiteren Eingriffen zu klären.
 
 Der [Vorschlag U01](ERSTER-UEBERARBEITUNGSSCHRITT.md) bleibt erhalten; seine
 Sicherheitsbefunde sind durch die geänderte Reihenfolge nicht behoben.

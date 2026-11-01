@@ -11,7 +11,7 @@ mit lesenden Live-Belegen; es wurde keine Netzänderung aktiviert.
 
 ## Entscheidungsgrundlage
 
-Am 1. November 2026 ab 14:27 MEZ wurden über den bestätigten WSL-SSH-Zugang
+Am 1. November 2026 ab 13:27 MEZ wurden über den bestätigten WSL-SSH-Zugang
 auf `proxmox2` Schnittstellen, Bridges, CT-Konfigurationen, Routen, Weiterleitung,
 aktive Filter und der Firewall-Ladepfad gelesen. Unbereinigte Ergebnisse bleiben
 lokal unter `.local/analysis/first-step-*.json`. Netzraumfilter des DNS-LXC
