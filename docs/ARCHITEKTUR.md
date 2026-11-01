@@ -11,8 +11,18 @@ enthält die strukturierten Angaben.
 - `proxmox2` dient als Router und besitzt sechs physische Ethernet-Ports.
 - Netzwerksegmentierung ohne VLANs.
 - Internet über Fritzbox Cable; eine weitere Fritzbox ist Teil des WLAN-Mesh.
-- Zwei Fritz-Repeater sind vorhanden. Modelle, Mesh-Master, Uplinks und
-  Gastnetzanbindung sind noch nicht festgestellt.
+- Zwei Fritz-Repeater 1200 sind vorhanden; die Fritzboxen sind eine 6670 Cable
+  und eine 7530 AX. Mesh-Master, Uplinks und Gastnetzanbindung sind noch offen.
+- Vodafone-Dual-Stack mit fester IPv4 `109.91.25.25` und laut Betreiber statischem
+  IPv6-Präfix `2a02:908:c250:9d00::/59`. Die angezeigte Anschlußadresse
+  `2a02:8070:a00::3e6a` ist davon getrennt zu betrachten.
+- Eigene Domain `jaylab.org`; Zugriff auf `dfderp.jaylab.org` über `cloudflared`.
+
+Belege, Anbieter-DNS-Server und die Verbesserungsplanung stehen unter
+[Internet, Domain und Tunnel](INTERNET-DOMAIN-TUNNEL.md). Das `/59` bietet
+32 `/64`-Netze; seine tatsächliche Weitergabe an `proxmox2` und die Zuordnung
+zu den physischen Segmenten sind noch nicht geprüft. Bestehende ULA-Adressen
+werden durch diese Betreiberangabe nicht ersetzt.
 
 ## Logischer Zusammenhang, noch kein Verkabelungsplan
 
@@ -66,6 +76,12 @@ Nodes gezählt, solange ihre Funktion nicht festgestellt ist.
    mit mehreren Funk-/Ethernet-MACs beweisen keine zusätzlichen Repeater.
 6. Welche IPv6-Präfixe, Default-Router und Filter sind tatsächlich aktiv?
    Welche Pfade bleiben bei Ausfall von `proxmox2`, dnsmasq oder Cable nutzbar?
+7. Welchen Teil des öffentlichen `/59` nutzt die Fritzbox, welchen delegiert
+   oder routet sie zum nachgelagerten Router? Wie funktionieren Rückroute,
+   RA, Präfixerneuerung und IPv6-Filterung je Zone?
+8. Welcher Connector und welcher interne Dienst bedienen `dfderp.jaylab.org`?
+   Welche DNS-, TLS- und Anmelderegeln gelten, und bestehen direkte Nebenpfade
+   über IPv4, IPv6 oder internes DNS?
 
 ## Zielrichtung
 

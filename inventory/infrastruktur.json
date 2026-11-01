@@ -8,6 +8,66 @@
     "source": "Betreiberangabe vom 1. November 2026"
   },
   "evidencePolicy": "Adressen und Ports sind Prüfziele aus dem Dateibestand; sie bestätigen weder laufende Rollen noch Anmeldung. Live-Belege stehen im Zugangsbericht.",
+  "internetAccess": {
+    "provider": "Vodafone",
+    "medium": "cable",
+    "edgeDevice": "fritz-cable",
+    "stack": "dual-stack",
+    "source": "Betreiberangaben, Anbietertext und Verbindungsanzeige, am 1. November 2026 übermittelt; Aufnahmezeit der Anzeige unbekannt; nicht unabhängig nachgemessen",
+    "publicIpv4": {
+      "address": "109.91.25.25",
+      "assignment": "static-provider-reported",
+      "liveVerified": false
+    },
+    "ipv6": {
+      "prefixCidr": "2a02:908:c250:9d00::/59",
+      "prefixLength": 59,
+      "assignment": "static-provider-reported",
+      "reportedConnectionAddress": "2a02:8070:a00::3e6a",
+      "connectionAddressAssignment": "unknown",
+      "earlierReportedAddress": "2a02:908:c250:9d00::1",
+      "earlierReportedAddressRole": "unknown",
+      "reportedAddressValidity": "78310/78310s",
+      "reportedPrefixValidity": "78310/78310s",
+      "subnet64Count": 32,
+      "firstSubnet64": "2a02:908:c250:9d00::/64",
+      "lastSubnet64": "2a02:908:c250:9d1f::/64",
+      "downstreamDelegation": null,
+      "segmentAssignments": null,
+      "liveVerified": false
+    },
+    "reportedConnectedSince": "05.10.2026, 04:37 Uhr",
+    "reportedConnectedSinceTimeZone": null,
+    "optionalProviderDnsV4": [
+      "82.212.62.126",
+      "82.212.62.127"
+    ],
+    "providerDnsUsageVerified": false,
+    "documentation": "docs/INTERNET-DOMAIN-TUNNEL.md"
+  },
+  "domains": [
+    {
+      "name": "jaylab.org",
+      "ownership": "operator-reported",
+      "source": "Betreiberangabe vom 1. November 2026",
+      "registrar": null,
+      "authoritativeDnsProvider": null
+    }
+  ],
+  "publicServices": [
+    {
+      "hostname": "dfderp.jaylab.org",
+      "accessPath": "cloudflare-tunnel",
+      "connectorSoftware": "cloudflared",
+      "source": "Betreiberangabe vom 1. November 2026",
+      "tunnelId": null,
+      "connector": null,
+      "origin": null,
+      "cloudflareAccessPolicy": null,
+      "applicationAuthentication": null,
+      "liveVerified": false
+    }
+  ],
   "devices": [
     {
       "id": "proxmox",
@@ -18,11 +78,19 @@
         8006
       ],
       "model": null,
-      "osVersion": null,
+      "osVersion": "Proxmox VE 9.2.21",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Dateibestand; live prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "root",
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "method": "ssh-wsl",
+        "profile": "jaylab-proxmox",
+        "checkedOn": "2026-11-01",
+        "keyLocation": "WSL ~/.ssh/id_ed25519",
+        "hostKeySource": "Bestehender vertrauenswürdiger SSH-Zugang bzw. Cluster/Gastagent"
+      }
     },
     {
       "id": "proxmox2",
@@ -33,11 +101,19 @@
         8006
       ],
       "model": null,
-      "osVersion": null,
+      "osVersion": "Proxmox VE 9.2.21",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "root",
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "method": "ssh-wsl",
+        "profile": "jaylab-proxmox2",
+        "checkedOn": "2026-11-01",
+        "keyLocation": "WSL ~/.ssh/id_ed25519",
+        "hostKeySource": "Bestehender vertrauenswürdiger SSH-Zugang bzw. Cluster/Gastagent"
+      }
     },
     {
       "id": "proxmox3",
@@ -48,25 +124,45 @@
         8006
       ],
       "model": null,
-      "osVersion": null,
+      "osVersion": "Proxmox VE 9.2.21",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Dateibestand; live prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "root",
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "method": "ssh-wsl",
+        "profile": "jaylab-proxmox3",
+        "checkedOn": "2026-11-01",
+        "keyLocation": "WSL ~/.ssh/id_ed25519",
+        "hostKeySource": "Bestehender vertrauenswürdiger SSH-Zugang bzw. Cluster/Gastagent"
+      }
     },
     {
       "id": "firewall",
-      "role": "nftables-zuordnung-offen",
+      "role": "nftables",
       "address": "192.168.10.3",
       "ports": [
         22
       ],
       "model": null,
-      "osVersion": null,
+      "osVersion": "Debian GNU/Linux 13",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Dateibestand; live prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "root",
+      "placement": {
+        "host": "proxmox2",
+        "type": "lxc",
+        "id": 103
+      },
+      "access": {
+        "status": "administrativ-geprueft",
+        "method": "ssh-wsl",
+        "profile": "jaylab-firewall",
+        "checkedOn": "2026-11-01",
+        "keyLocation": "WSL ~/.ssh/id_ed25519",
+        "hostKeySource": "Bestehender vertrauenswürdiger SSH-Zugang bzw. Cluster/Gastagent"
+      }
     },
     {
       "id": "dnsmasq",
@@ -77,11 +173,23 @@
         53
       ],
       "model": null,
-      "osVersion": null,
+      "osVersion": "Debian GNU/Linux 13",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Dateibestand; live prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "root",
+      "placement": {
+        "host": "proxmox2",
+        "type": "lxc",
+        "id": 101
+      },
+      "access": {
+        "status": "administrativ-geprueft",
+        "method": "ssh-wsl",
+        "profile": "jaylab-dnsmasq",
+        "checkedOn": "2026-11-01",
+        "keyLocation": "WSL ~/.ssh/id_ed25519",
+        "hostKeySource": "Bestehender vertrauenswürdiger SSH-Zugang bzw. Cluster/Gastagent"
+      }
     },
     {
       "id": "pbs",
@@ -92,11 +200,23 @@
         8007
       ],
       "model": null,
-      "osVersion": null,
+      "osVersion": "Proxmox Backup Server 4.2.8-1",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Dateibestand; live prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "root",
+      "placement": {
+        "host": "proxmox3",
+        "type": "qemu",
+        "id": 115
+      },
+      "access": {
+        "status": "administrativ-geprueft",
+        "method": "ssh-wsl",
+        "profile": "jaylab-pbs",
+        "checkedOn": "2026-11-01",
+        "keyLocation": "WSL ~/.ssh/id_ed25519",
+        "hostKeySource": "Bestehender vertrauenswürdiger SSH-Zugang bzw. Cluster/Gastagent"
+      }
     },
     {
       "id": "cisco16",
@@ -106,12 +226,23 @@
         22,
         443
       ],
-      "model": null,
-      "osVersion": null,
+      "model": "CBS350-16T-2G",
+      "osVersion": "3.2.0.89",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Dateibestand; live prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "jay",
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "userSource": "Betreiberangabe vom 1. November 2026",
+        "credentialStored": true,
+        "independentVerification": "vom-betreiber-am-geraet-bestaetigt",
+        "privilegeLevel": 15,
+        "method": "sshnet-kennwort",
+        "hostKeyConfirmedOn": "2026-11-01",
+        "checkedOn": "2026-11-01"
+      },
+      "modelSource": "Betreiberangabe vom 1. November 2026"
     },
     {
       "id": "cisco8",
@@ -121,12 +252,24 @@
         22,
         443
       ],
-      "model": null,
-      "osVersion": null,
+      "model": "SG250-08",
+      "osVersion": "2.5.9.15",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Dateibestand; live prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "jay",
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "userSource": "Betreiberangabe vom 1. November 2026",
+        "credentialStored": true,
+        "independentVerification": "vom-betreiber-am-geraet-bestaetigt",
+        "privilegeLevel": 15,
+        "method": "sshnet-kennwort",
+        "hostKeyConfirmedOn": "2026-11-01",
+        "checkedOn": "2026-11-01",
+        "passwordAuthenticationSaved": true
+      },
+      "modelSource": "Betreiberangabe vom 1. November 2026"
     },
     {
       "id": "cisco162",
@@ -136,12 +279,23 @@
         22,
         443
       ],
-      "model": null,
-      "osVersion": null,
+      "model": "CBS350-16T-2G",
+      "osVersion": "3.2.0.89",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Dateibestand; live prüfen",
-      "sshUser": null,
-      "placement": null
+      "sshUser": "jay",
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "userSource": "Betreiberangabe vom 1. November 2026",
+        "credentialStored": true,
+        "independentVerification": "vom-betreiber-am-geraet-bestaetigt",
+        "privilegeLevel": 15,
+        "method": "sshnet-kennwort",
+        "hostKeyConfirmedOn": "2026-11-01",
+        "checkedOn": "2026-11-01"
+      },
+      "modelSource": "Betreiberangabe vom 1. November 2026"
     },
     {
       "id": "fritz-cable",
@@ -150,12 +304,24 @@
       "ports": [
         443
       ],
-      "model": null,
-      "osVersion": null,
+      "model": "FRITZ!Box 6670 Cable",
+      "osVersion": "FRITZ!OS 8.25",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
       "sshUser": null,
-      "placement": null
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "credentialStored": true,
+        "method": "tr064-https-digest",
+        "checkedOn": "2026-11-01",
+        "authenticated": true,
+        "reportedVersion": "284.08.25",
+        "boxAdmin": "readwrite",
+        "user": "fritz7964",
+        "certificateVerification": "vom-betreiber-bestaetigt",
+        "certificateConfirmedOn": "2026-11-01"
+      }
     },
     {
       "id": "fritz-mesh",
@@ -164,36 +330,80 @@
       "ports": [
         443
       ],
-      "model": null,
-      "osVersion": null,
+      "model": "FRITZ!Box 7530 AX",
+      "osVersion": "FRITZ!OS 8.25",
       "addressSource": "router/dnsmasq/hosts",
       "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
       "sshUser": null,
-      "placement": null
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "credentialStored": true,
+        "method": "tr064-https-digest",
+        "checkedOn": "2026-11-01",
+        "authenticated": true,
+        "reportedVersion": "256.08.25",
+        "boxAdmin": "readwrite",
+        "user": "jay",
+        "certificateVerification": "vom-betreiber-bestaetigt",
+        "certificateConfirmedOn": "2026-11-01"
+      }
     },
     {
       "id": "repeater-1",
       "role": "wlan-repeater",
-      "address": null,
-      "ports": [],
-      "model": null,
+      "address": "192.168.20.194",
+      "ports": [
+        80,
+        443,
+        49000,
+        49443
+      ],
+      "model": "FRITZ!Repeater 1200",
       "osVersion": null,
-      "addressSource": "unbekannt",
+      "addressSource": "DHCP-Lease repeater-og und HTTP-Gerätebeschreibung am 1. November 2026",
       "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
       "sshUser": null,
-      "placement": null
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "method": "web-https-pbkdf2-v2",
+        "authenticated": true,
+        "checkedOn": "2026-11-01",
+        "credentialStored": true,
+        "certificateConfirmedOn": "2026-11-01",
+        "certificateVerification": "vom-betreiber-bestaetigt",
+        "boxAdmin": "readwrite",
+        "testSessionLoggedOut": true
+      }
     },
     {
       "id": "repeater-2",
       "role": "wlan-repeater",
-      "address": null,
-      "ports": [],
-      "model": null,
+      "address": "192.168.20.227",
+      "ports": [
+        80,
+        443,
+        49000,
+        49443
+      ],
+      "model": "FRITZ!Repeater 1200",
       "osVersion": null,
-      "addressSource": "unbekannt",
+      "addressSource": "DHCP-Lease repeater-keller und HTTP-Gerätebeschreibung am 1. November 2026",
       "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
       "sshUser": null,
-      "placement": null
+      "placement": null,
+      "access": {
+        "status": "administrativ-geprueft",
+        "method": "web-https-pbkdf2-v2",
+        "authenticated": true,
+        "checkedOn": "2026-11-01",
+        "credentialStored": true,
+        "certificateConfirmedOn": "2026-11-01",
+        "certificateVerification": "vom-betreiber-bestaetigt",
+        "boxAdmin": "readwrite",
+        "testSessionLoggedOut": true
+      }
     }
   ],
   "segments": [
@@ -350,6 +560,10 @@
     "Welche Funktionen haben die Namen proxmox2-2 bis proxmox2-6?",
     "Welche physischen Layer-2-Grenzen bestehen an Cisco und Mesh tatsächlich?",
     "Welches Fritz-Gerät ist Mesh-Master und welcher Uplink führt wohin?",
-    "Welche Repeater-Namen/MACs gehören zu den zwei tatsächlichen Geräten?"
+    "Welche Repeater-Namen/MACs gehören zu den zwei tatsächlichen Geräten?",
+    "Welchen Teil von 2a02:908:c250:9d00::/59 verwendet die Fritzbox selbst und welchen delegiert oder routet sie zu proxmox2?",
+    "Welche globalen IPv6-Adressen, RA-Absender, Rückrouten und Filter sind je Zone tatsächlich aktiv?",
+    "Welche autoritative DNS-Verwaltung und welche internen Antworten gelten für jaylab.org?",
+    "Welcher cloudflared-Connector, welches interne Ziel und welcher Zugangsschutz gehören zu dfderp.jaylab.org?"
   ]
 }

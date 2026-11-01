@@ -7,7 +7,11 @@
   dem Routing. Segmentierung soll ohne VLANs erfolgen. Keine VLANs, Trunks oder
   gemeinsam gebrückten Vertrauenszonen als stillschweigende Lösung einführen.
 - Internet kommt über eine Fritzbox Cable; eine zweite Fritzbox und zwei
-  Fritz-Repeater gehören zum WLAN-Aufbau. Modelle und Verkabelung sind offen.
+  Fritz-Repeater gehören zum WLAN-Aufbau. Modelle stehen im Inventar;
+  Verkabelung und Mesh-Rollen sind noch zu prüfen.
+- Feste Vodafone-Adressen, Dual Stack, die eigene Domain `jaylab.org` und
+  `cloudflared` für `dfderp.jaylab.org` bei Netz- und DNS-Entwürfen berücksichtigen.
+  Belege und offene Prüfungen: [Internet, Domain und Tunnel](docs/INTERNET-DOMAIN-TUNNEL.md).
 - Einstieg: [README.md](README.md). Architektur und Unsicherheiten stehen in
   [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md), Ziele in
   [docs/ZIELE.md](docs/ZIELE.md), Geräte und Portbelegung in

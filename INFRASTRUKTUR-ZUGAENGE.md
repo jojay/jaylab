@@ -1,5 +1,9 @@
 # Prüfung der Infrastrukturzugänge
 
+Aktueller Einrichtungsstand vom 1. November 2026:
+[Verwaltungszugänge](docs/ZUGANGSEINRICHTUNG.md). Die folgenden Abschnitte
+bewahren die früheren Prüfungen; deren damalige Anmeldehindernisse sind teilweise behoben.
+
 ## Nachprüfung der Cisco-Kommandozeilenzugänge am 1. November 2026
 
 Alle drei dokumentierten Switches nehmen SSH-Verbindungen auf Port 22 an und

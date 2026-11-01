@@ -13,6 +13,8 @@ Vor Implementierung echte Quellgeräte, Ziele, Ports und Abhängigkeiten aufnehm
 | Familie | Drucker / benötigte Medien- und IoT-Dienste | Konkrete Geräte und Dienste; Discovery gesondert begründen | Nutzfunktion funktioniert, benachbarte Dienste bleiben gesperrt |
 | Bestimmter Anwendungsdienst | Synstation / Datendienst | Nur benötigtes Ziel und Protokoll; z. B. tatsächlichen Paperless-SMB-Pfad prüfen | Anwendung funktioniert; anderes IoT-Gerät erreicht Datenfreigabe nicht |
 | Gäste | Internet und erforderliche Netzdienste | Kein Zugriff auf interne Geräte oder Verwaltungsoberflächen | Internet funktioniert; interne Ziele über IPv4 und IPv6 gesperrt |
+| Nachgewiesener cloudflared-Connector | Cloudflare-Tunnelendpunkte | Ausgehend benötigter Tunneltransport, DNS und belegte Betriebsabhängigkeiten; Protokoll und aktuelle Ziele vor Rollout bestimmen | Tunnel und Wiederverbindung funktionieren; kein pauschaler Internetzugriff daraus abgeleitet |
+| Nachgewiesener cloudflared-Connector | Internes Ziel von dfderp.jaylab.org | Nur ermittelter Dienst mit konkreter Adresse und Port; Ziel noch offen | Anwendung funktioniert; andere Dienste und Verwaltungsziele bleiben gesperrt |
 | Internet | Interne Netze | Keine neuen eingehenden Verbindungen ohne einzeln beauftragten Dienst | Externe Gegenprüfung; Fritzbox-Freigaben, IPv6 und Tunnel berücksichtigen |
 | Zonen untereinander, sonstiger Verkehr | Andere Zone | Standardmäßig verweigern | Gezielte Negativtests für jede relevante Grenze |
 
@@ -20,6 +22,13 @@ Für jede konkrete Ausnahme Quelle, Eingangs-/Ausgangsschnittstelle, Ziel,
 Transportprotokoll, Port, IPv4/IPv6, Zweck und Beleg festhalten. Bestehende
 Verbindungen und Rückverkehr berücksichtigen; ICMPv6 nicht pauschal sperren.
 Antwortverkehr ersetzt keine ausdrückliche Erlaubnis für neue Gegenverbindungen.
+
+Der bestehende Tunnel für `dfderp.jaylab.org` ist ein Zugangsweg zur Anwendung,
+auch ohne eingehende Portfreigabe am Router. Seine DNS-, TLS- und Anmelderegeln
+sowie direkter Zugriff auf das Ziel sind gesondert zu prüfen. Der feste
+Dual-Stack-Anschluß mit `2a02:908:c250:9d00::/59` verlangt auch Regeln für globale
+IPv6-Adressen; NAT oder ULA ersetzen keine Filterprüfung. Belege und technische
+Referenzen stehen unter [Internet, Domain und Tunnel](INTERNET-DOMAIN-TUNNEL.md).
 
 ## Nachweis physischer Isolation
 

@@ -11,12 +11,14 @@ Die Segmentierung soll mit getrennten physischen Ethernet-Pfaden ohne VLANs erfo
 | --- | --- |
 | [AGENTS.md](AGENTS.md) | Dauerhafte Arbeitsregeln für Agenten |
 | [Architektur](docs/ARCHITEKTUR.md) | Betreiberangaben, Dateibestand, Grenzen und offene Fragen |
+| [Internet, Domain und Tunnel](docs/INTERNET-DOMAIN-TUNNEL.md) | Feste Vodafone-Adressen, IPv6-/59, jaylab.org und Prüfplanung für cloudflared |
 | [Inventar](inventory/infrastruktur.json) | Maschinenlesbare Geräte, Segmente und sechs noch zuzuordnende Ports |
 | [Ziele](docs/ZIELE.md) | Prioritäten, Abhängigkeiten und überprüfbare Abschlußkriterien |
 | [Befunde](docs/BEFUNDE.md) | Erste Risiken aus den Dateien; noch kein vollständiges Live-Audit |
 | [Netzfreigaben](docs/NETZFREIGABEN.md) | Entwurf der Verkehrsregeln und ihrer Abnahme |
 | [Betrieb](docs/BETRIEB.md) | Bestandsaufnahme, Deployment und Wiederherstellung |
 | [Zugangsbericht](INFRASTRUKTUR-ZUGAENGE.md) | Messungen vom 31. Oktober und 1. November 2026 |
+| [Zugangseinrichtung](docs/ZUGANGSEINRICHTUNG.md) | Geprüfte Verwaltungszugänge zu allen 13 inventarisierten Komponenten |
 
 Die fünf projektspezifischen Skills liegen in `.agents/skills/`. Diese Ablage
 entspricht dem von der [offiziellen OpenAI-Dokumentation beschriebenen Aufbau](https://developers.openai.com/blog/skills-agents-sdk).
@@ -45,8 +47,9 @@ Ein Netzverbot der Ausführungsumgebung ist kein Nachweis für einen Gerätefehl
 
 ## Nächster Arbeitsschritt
 
-Mit `$jaylab-bestandsaufnahme` Ziel **Z01** bearbeiten: Zugänge nachweisen und
-die sechs Ports von `proxmox2` bis zu Bridges, LXC-Schnittstellen, Switchports
+Der Zugangsteil von **Z01** ist abgeschlossen. Mit `$jaylab-bestandsaufnahme`
+nun die sechs Ports von `proxmox2` bis zu Bridges, LXC-Schnittstellen, Switchports
 und Fritz-Geräten verfolgen. Unabhängig davon können lokale Konfigurationen
-gegen die Befunde geprüft werden. Produktive Änderungen folgen erst im Rahmen
+gegen die Befunde geprüft werden. **Z09** ergänzt die Planung für den festen
+Dual-Stack-Anschluß und den bestehenden Cloudflare-Tunnel. Produktive Änderungen folgen erst im Rahmen
 eines entsprechenden Auftrags mit konkretem Rückweg.

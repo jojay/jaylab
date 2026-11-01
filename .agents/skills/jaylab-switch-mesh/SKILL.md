@@ -12,9 +12,10 @@ Inventarisierte Ziele sind `cisco16` (.10.1), `cisco8` (.10.2), `cisco162`
 
 ## Cisco-Kommandozeile
 
-Am 1. November 2026 antworteten alle drei Geräte über SSH; die Aushandlung
-gelang mit zielbezogenem `-o HostKeyAlgorithms=+ssh-rsa`. Ihre beobachteten
-Fingerabdrücke sind noch nicht unabhängig bestätigt. Keine globale
+Die Erstprüfung benötigte zielbezogen `-o HostKeyAlgorithms=+ssh-rsa`.
+Der aktuelle Stand zu Betreiberabgleich, bestätigten Fingerabdrücken und
+Anmeldungen steht in der [Zugangseinrichtung](../../../docs/ZUGANGSEINRICHTUNG.md)
+und im Inventar. Bereits belegte Bestätigungen nicht erneut verlangen. Keine globale
 Algorithmuslockerung, kein `StrictHostKeyChecking=no` und keine automatische
 Übernahme eines per Netzscan gewonnenen Schlüssels.
 
@@ -33,8 +34,9 @@ erst nach Nachweis von Gegenport, Verwaltungsweg und unabhängigem Rückweg plan
 ## Fritzbox und zwei Repeater
 
 Die Kabel-Fritzbox stellt laut Betreiber Internet bereit; die zweite Fritzbox
-gehört zum WLAN-Mesh. Modelle und Zuordnung der zwei tatsächlichen Repeater
-zu den zahlreichen DHCP-Namen/MACs müssen noch aufgenommen werden.
+gehört zum WLAN-Mesh. Die ermittelten Modelle und Adressen stehen im Inventar;
+die tatsächlichen Mesh-Rollen und Uplinks sind weiterhin zu prüfen. Aus den
+zahlreichen DHCP-Namen/MACs keine zusätzlichen physischen Repeater ableiten.
 
 Erfasse Gerät/Version, Betriebsmodus, Mesh-Master/-Repeater, Funk- oder LAN-Uplink,
 SSID/Gastzugang, IP-Zone, DHCP-/DNS-/RA-Rolle, Routen und Portfreigaben.

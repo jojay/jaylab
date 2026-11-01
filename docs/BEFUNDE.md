@@ -14,9 +14,10 @@ ob sie produktiv wirksam sind, muß anhand der laufenden Konfiguration geprüft 
 | B06 | mittel | dnsmasq-Konfiguration und `router/stubby/stubby.yml` | dnsmasq nutzt öffentliche Upstreams; Stubby-Anbindung ist auskommentiert. Stubby nennt dieselben lokalen Adressen ohne abweichenden Port. Möglicher Listenerkonflikt, sofern beide Dienste dort laufen. Listener und gewünschte Resolverkette aufnehmen. |
 | B07 | mittel | dnsmasq-Konfiguration und `README_ULA_IPv6.md` | README nennt `fd00:*`, Konfiguration `fd38:21a1:1b97:*`; Bereichs- und Sicherheitsbeschreibungen weichen ebenfalls ab. Dokumentation erst nach Istabgleich berichtigen. ULA allein beweist keine Isolation. |
 | B08 | mittel | `router/nftables/nftables.nft`, SSH-Kommentar in `prerouting` | `ip protocol 22` prüft eine IP-Protokollnummer, keinen TCP-Zielport 22. Regeln auf beabsichtigte Semantik und übrige Filterpfade prüfen. |
-| B09 | hoch | [Zugangsbericht](../INFRASTRUKTUR-ZUGAENGE.md) | Proxmox-Schlüsselanmeldung abgewiesen, weitere Hostschlüssel unbekannt, Zertifikatsprobleme; administrative Analyse und Rollout sind damit noch nicht nachgewiesen. |
+| B09 | behoben: Zugänge | [Zugangsbericht](../INFRASTRUKTUR-ZUGAENGE.md) | Administrative Anmeldung für alle 13 inventarisierten Komponenten mit geprüften Hostschlüsseln bzw. bestätigten Zertifikaten nachgewiesen; siehe [Einrichtungsstand](ZUGANGSEINRICHTUNG.md). Portzuordnung, Netzpfade und weitergehende Absicherung bleiben eigene Prüfziele. |
 | B10 | hoch | Betreiberangabe und dnsmasq-Schnittstellen | Sechs physische Ports stehen sechs logischen Segmenten und einem noch ungeklärten Internet-Uplink gegenüber. Vor Architekturänderung Portbudget und gemeinsame Layer-2-Pfade klären. |
 | B11 | mittel | DHCP-Datei und Betreiberangabe | Mehrere Repeater-Namen und MACs im Bestand, laut Betreiber zwei Geräte. Aktuelle Geräteidentität und Mesh-Verkabelung aufnehmen, keine Gerätezahl aus MAC-Einträgen ableiten. |
+| B12 | hoch | Live-Aufnahme per vertrauenswürdigem Clusterzugang | CT 101 (DNS) und CT 103 (Firewall) verwenden denselben Ed25519-Hostschlüssel. Getrennte Geräteidentitäten mit Rücksicht auf bestehende Clientbindungen herstellen. |
 
 Die Durchsicht ändert keine dieser Konfigurationen. Bei weiteren Arbeiten
 Beobachtung, Auswirkung, Gegenprüfung und Behebung getrennt dokumentieren.
