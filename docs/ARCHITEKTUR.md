@@ -1,0 +1,82 @@
+# Architektur und Beleglage
+
+Stand: 1. November 2026. Diese Datei beschreibt Ausgangslage und Zielrichtung,
+nicht einen bereits geprüften Umbau. Das [Inventar](../inventory/infrastruktur.json)
+enthält die strukturierten Angaben.
+
+## Vorgaben des Betreibers
+
+- Proxmox mit LXC; dnsmasq für Netzdienste und nftables für die Firewall.
+- Programmierbare Cisco-Switches.
+- `proxmox2` dient als Router und besitzt sechs physische Ethernet-Ports.
+- Netzwerksegmentierung ohne VLANs.
+- Internet über Fritzbox Cable; eine weitere Fritzbox ist Teil des WLAN-Mesh.
+- Zwei Fritz-Repeater sind vorhanden. Modelle, Mesh-Master, Uplinks und
+  Gastnetzanbindung sind noch nicht festgestellt.
+
+## Logischer Zusammenhang, noch kein Verkabelungsplan
+
+```mermaid
+flowchart TD
+    Internet --> Cable["Fritzbox Cable: Internetzugang"]
+    Cable -. "Transit / Anschluß noch zu prüfen" .-> P2["proxmox2: Router, 6 physische Ethernet-Ports"]
+    P2 -. "NIC → Bridge → LXC / Routingpfad offen" .-> Dienste["nftables und dnsmasq"]
+    P2 -. "Physische Segmentpfade noch zuzuordnen" .-> Cisco["Cisco-Switches"]
+    Cisco -. "Zugehörigkeit und Uplinks offen" .-> Mesh["Zweite Fritzbox + 2 Repeater"]
+```
+
+Gestrichelte Kanten sind zu prüfende Beziehungen, keine bestätigten Kabel.
+Aus der Routerrolle des Hosts folgt nicht, daß nftables im Host statt im LXC läuft.
+
+## Dateibestand
+
+`router/dnsmasq/dnsmasq.conf` beschreibt sechs logische Schnittstellen `enp1s0`
+bis `enp6s0` für Admin, General, Familie, IoT, Media und Gäste. Diese Namen
+beweisen keine Zuordnung zu den physischen Ports des Proxmox-Hosts.
+Als Gateways sind `192.168.<Segment>.3`, als DNS-Adressen `.6` eingetragen.
+Der verwendete ULA-Präfix im Konfigurationsbestand ist `fd38:21a1:1b97::/48`.
+
+`router/nftables/nftables.nft` enthält NAT über `enp2s0`, Fritzbox-Ziele
+`192.168.20.4` und `.5` sowie ältere WAN-, WLAN- und DMZ-Angaben. Die
+Hosts-Datei bezeichnet `.5` als Kabel-Fritzbox und `.4` als alte DSL-Fritzbox.
+Dies sind Hinweise auf den Bestand, keine Bestätigung des aktuellen Betriebsmodus.
+Insbesondere ist General nicht ohne Prüfung als getrenntes WAN-Transitnetz anzusehen.
+
+Die Adressen `proxmox2-2` bis `proxmox2-6` werden nicht als zusätzliche physische
+Nodes gezählt, solange ihre Funktion nicht festgestellt ist.
+
+## Entscheidende offene Fragen
+
+1. Welche NIC mit welcher MAC und welchem Kabel führt zu welchem Gegenport?
+   Welche Bridges und LXC-Schnittstellen hängen daran? Liegen die Routerdienste
+   auf `proxmox2`, in einem LXC oder verteilt?
+2. Wie passen sechs physische Ports, sechs konfigurierte LAN-Segmente und der
+   Internet-Uplink zusammen? Wird ein Segment zugleich als Transit genutzt?
+   Sind alle Segmente tatsächlich verkabelt? Erst die Aufnahme entscheidet.
+3. Können Cisco-Switches im vorhandenen Modell und Betriebsmodus die gewünschten
+   physischen Segmentpfade wirklich getrennt halten? Mehrere ungetaggte Netze
+   auf demselben gemeinsamen Switch-Fabric oder Uplink nicht als isoliert annehmen.
+   Ohne VLANs sind getrennte Broadcast-Domänen physisch oder durch nachgewiesene
+   Geräteeigenschaften sicherzustellen. Ein nicht umsetzbarer Entwurf ist als
+   Grenze auszuweisen; keine verdeckte VLAN-Lösung einführen.
+4. Welches Fritz-Gerät stellt DHCP, DNS, IPv6-RA und die Standardroute bereit?
+   Besteht ein Weg von WLAN-Geräten direkt zur Kabel-Fritzbox an der Firewall vorbei?
+5. Welche Fritzbox ist Mesh-Master, wie sind die zwei Repeater angebunden, und
+   welche SSID liegt tatsächlich in welcher Broadcast-Domäne? DHCP-Gerätenamen
+   mit mehreren Funk-/Ethernet-MACs beweisen keine zusätzlichen Repeater.
+6. Welche IPv6-Präfixe, Default-Router und Filter sind tatsächlich aktiv?
+   Welche Pfade bleiben bei Ausfall von `proxmox2`, dnsmasq oder Cable nutzbar?
+
+## Zielrichtung
+
+Zwischen Vertrauenszonen erfolgt Verkehr über den nachgewiesenen Router- und
+Firewallpfad. Gemeinsame Bridges, Switchverbindungen, WLAN-Uplinks oder zweite
+Default-Router dürfen die Grenze nicht umgehen. Bestehende Subnetze zunächst
+erhalten und ihre Notwendigkeit prüfen, bevor Adressen oder Geräte umziehen.
+
+Proxmox-Verwaltung bleibt vom Gast-/IoT-Zugriff getrennt. Notzugang,
+Startreihenfolge und Wiederherstellung dürfen nicht ausschließlich von demselben
+Router-LXC, demselben DNS oder demselben Switchpfad abhängen, der geändert wird.
+
+Proxmox-Netzwerkänderungen nach der Dokumentation der tatsächlich installierten
+Version planen; versions- oder modellspezifische Aussagen erst nach deren Ermittlung treffen.

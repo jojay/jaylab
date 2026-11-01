@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jaylab-Bestandsaufnahme"
+  short_description: "Zugänge, Proxmox/LXC und physische Netzpfade prüfen"
+  default_prompt: "Erhebe mit $jaylab-bestandsaufnahme den belegten Istzustand für Z01."

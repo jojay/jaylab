@@ -1,0 +1,9 @@
+# Lokale Zugangsdaten, Rohinventar und Sicherungen
+.local/
+.env
+.env.*
+!.env.example
+*.key
+*.p12
+*.pfx
+__pycache__/

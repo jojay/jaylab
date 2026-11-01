@@ -1,13 +1,6 @@
 # list of static hosts
 127.0.0.1         localhost
 
-# DMZ 192.168.2.0/28
-192.168.2.4       waf.jaylab.local waf dokuwikiwaf
-fd38:21a1:1b97:2::4         waf.jaylab.local waf dokuwikiwaf
-
-192.168.3.6       web.jaylab.local web dokuwikiweb
-fd38:21a1:1b97:3::6         web.jaylab.local web dokuwikiweb
-
 #  subnet 10 - admin    
 192.168.10.1      cisco16
 fd38:21a1:1b97:10::1        cisco16

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jaylab-DNS und DHCP"
+  short_description: "DNS, DHCP, IPv6-RA und Resolverkette prüfen"
+  default_prompt: "Prüfe mit $jaylab-dns-dhcp Zuständigkeiten und Ausfallverhalten der Netzdienste."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jaylab-Cisco und Mesh"
+  short_description: "Cisco-Zugänge und Fritz-Mesh-Pfade untersuchen"
+  default_prompt: "Erhebe mit $jaylab-switch-mesh die Geräte, Portrollen und WLAN-Nebenpfade."

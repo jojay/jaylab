@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "updatedOn": "2026-11-01",
+  "intent": {
+    "segmentation": "physisch-ohne-vlans",
+    "routerHost": "proxmox2",
+    "physicalPortCount": 6,
+    "source": "Betreiberangabe vom 1. November 2026"
+  },
+  "evidencePolicy": "Adressen und Ports sind Prüfziele aus dem Dateibestand; sie bestätigen weder laufende Rollen noch Anmeldung. Live-Belege stehen im Zugangsbericht.",
+  "devices": [
+    {
+      "id": "proxmox",
+      "role": "virtualisierung",
+      "address": "192.168.10.4",
+      "ports": [
+        22,
+        8006
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Dateibestand; live prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "proxmox2",
+      "role": "router-host",
+      "address": "192.168.10.7",
+      "ports": [
+        22,
+        8006
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "proxmox3",
+      "role": "virtualisierung",
+      "address": "192.168.10.13",
+      "ports": [
+        22,
+        8006
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Dateibestand; live prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "firewall",
+      "role": "nftables-zuordnung-offen",
+      "address": "192.168.10.3",
+      "ports": [
+        22
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Dateibestand; live prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "dnsmasq",
+      "role": "dns-dhcp-ra",
+      "address": "192.168.10.6",
+      "ports": [
+        22,
+        53
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Dateibestand; live prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "pbs",
+      "role": "backup",
+      "address": "192.168.10.15",
+      "ports": [
+        22,
+        8007
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Dateibestand; live prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "cisco16",
+      "role": "switch",
+      "address": "192.168.10.1",
+      "ports": [
+        22,
+        443
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Dateibestand; live prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "cisco8",
+      "role": "switch",
+      "address": "192.168.10.2",
+      "ports": [
+        22,
+        443
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Dateibestand; live prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "cisco162",
+      "role": "switch",
+      "address": "192.168.10.16",
+      "ports": [
+        22,
+        443
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Dateibestand; live prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "fritz-cable",
+      "role": "internet",
+      "address": "192.168.20.5",
+      "ports": [
+        443
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "fritz-mesh",
+      "role": "wlan-mesh",
+      "address": "192.168.20.4",
+      "ports": [
+        443
+      ],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "router/dnsmasq/hosts",
+      "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "repeater-1",
+      "role": "wlan-repeater",
+      "address": null,
+      "ports": [],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "unbekannt",
+      "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
+      "sshUser": null,
+      "placement": null
+    },
+    {
+      "id": "repeater-2",
+      "role": "wlan-repeater",
+      "address": null,
+      "ports": [],
+      "model": null,
+      "osVersion": null,
+      "addressSource": "unbekannt",
+      "roleSource": "Betreiberangabe; konkrete Gerätezuordnung prüfen",
+      "sshUser": null,
+      "placement": null
+    }
+  ],
+  "segments": [
+    {
+      "id": "admin",
+      "name": "Verwaltung",
+      "ipv4Cidr": "192.168.10.0/24",
+      "ipv6Cidr": "fd38:21a1:1b97:10::/64",
+      "gatewayV4": "192.168.10.3",
+      "dnsV4": "192.168.10.6",
+      "dnsmasqInterfaceHint": "enp1s0",
+      "source": "router/dnsmasq/dnsmasq.conf",
+      "physicalPathVerified": false
+    },
+    {
+      "id": "general",
+      "name": "Allgemein",
+      "ipv4Cidr": "192.168.20.0/24",
+      "ipv6Cidr": "fd38:21a1:1b97:20::/64",
+      "gatewayV4": "192.168.20.3",
+      "dnsV4": "192.168.20.6",
+      "dnsmasqInterfaceHint": "enp2s0",
+      "source": "router/dnsmasq/dnsmasq.conf",
+      "physicalPathVerified": false
+    },
+    {
+      "id": "familie",
+      "name": "Familie",
+      "ipv4Cidr": "192.168.30.0/24",
+      "ipv6Cidr": "fd38:21a1:1b97:30::/64",
+      "gatewayV4": "192.168.30.3",
+      "dnsV4": "192.168.30.6",
+      "dnsmasqInterfaceHint": "enp3s0",
+      "source": "router/dnsmasq/dnsmasq.conf",
+      "physicalPathVerified": false
+    },
+    {
+      "id": "iot",
+      "name": "IoT",
+      "ipv4Cidr": "192.168.40.0/24",
+      "ipv6Cidr": "fd38:21a1:1b97:40::/64",
+      "gatewayV4": "192.168.40.3",
+      "dnsV4": "192.168.40.6",
+      "dnsmasqInterfaceHint": "enp4s0",
+      "source": "router/dnsmasq/dnsmasq.conf",
+      "physicalPathVerified": false
+    },
+    {
+      "id": "media",
+      "name": "Medien / Daten",
+      "ipv4Cidr": "192.168.50.0/24",
+      "ipv6Cidr": "fd38:21a1:1b97:50::/64",
+      "gatewayV4": "192.168.50.3",
+      "dnsV4": "192.168.50.6",
+      "dnsmasqInterfaceHint": "enp5s0",
+      "source": "router/dnsmasq/dnsmasq.conf",
+      "physicalPathVerified": false
+    },
+    {
+      "id": "gaeste",
+      "name": "Gäste",
+      "ipv4Cidr": "192.168.60.0/24",
+      "ipv6Cidr": "fd38:21a1:1b97:60::/64",
+      "gatewayV4": "192.168.60.3",
+      "dnsV4": "192.168.60.6",
+      "dnsmasqInterfaceHint": "enp6s0",
+      "source": "router/dnsmasq/dnsmasq.conf",
+      "physicalPathVerified": false
+    }
+  ],
+  "physicalPorts": [
+    {
+      "id": "p1",
+      "host": "proxmox2",
+      "hostInterface": null,
+      "mac": null,
+      "bridge": null,
+      "lxcId": null,
+      "lxcInterface": null,
+      "peerDevice": null,
+      "peerPort": null,
+      "segment": null,
+      "verified": false
+    },
+    {
+      "id": "p2",
+      "host": "proxmox2",
+      "hostInterface": null,
+      "mac": null,
+      "bridge": null,
+      "lxcId": null,
+      "lxcInterface": null,
+      "peerDevice": null,
+      "peerPort": null,
+      "segment": null,
+      "verified": false
+    },
+    {
+      "id": "p3",
+      "host": "proxmox2",
+      "hostInterface": null,
+      "mac": null,
+      "bridge": null,
+      "lxcId": null,
+      "lxcInterface": null,
+      "peerDevice": null,
+      "peerPort": null,
+      "segment": null,
+      "verified": false
+    },
+    {
+      "id": "p4",
+      "host": "proxmox2",
+      "hostInterface": null,
+      "mac": null,
+      "bridge": null,
+      "lxcId": null,
+      "lxcInterface": null,
+      "peerDevice": null,
+      "peerPort": null,
+      "segment": null,
+      "verified": false
+    },
+    {
+      "id": "p5",
+      "host": "proxmox2",
+      "hostInterface": null,
+      "mac": null,
+      "bridge": null,
+      "lxcId": null,
+      "lxcInterface": null,
+      "peerDevice": null,
+      "peerPort": null,
+      "segment": null,
+      "verified": false
+    },
+    {
+      "id": "p6",
+      "host": "proxmox2",
+      "hostInterface": null,
+      "mac": null,
+      "bridge": null,
+      "lxcId": null,
+      "lxcInterface": null,
+      "peerDevice": null,
+      "peerPort": null,
+      "segment": null,
+      "verified": false
+    }
+  ],
+  "openQuestions": [
+    "Wie sind WAN und sechs logische Segmente auf sechs physische Ports verteilt?",
+    "Laufen Routing und nftables im Host, im Firewall-LXC oder verteilt?",
+    "Welche Funktionen haben die Namen proxmox2-2 bis proxmox2-6?",
+    "Welche physischen Layer-2-Grenzen bestehen an Cisco und Mesh tatsächlich?",
+    "Welches Fritz-Gerät ist Mesh-Master und welcher Uplink führt wohin?",
+    "Welche Repeater-Namen/MACs gehören zu den zwei tatsächlichen Geräten?"
+  ]
+}

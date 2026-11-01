@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jaylab-Deployment"
+  short_description: "Änderungen mit geprüftem Rückweg durchführen"
+  default_prompt: "Bereite mit $jaylab-deployment eine konkrete beauftragte Änderung mit Abnahme und Rückweg vor."

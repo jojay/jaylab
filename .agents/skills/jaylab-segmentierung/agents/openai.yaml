@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jaylab-Segmentierung"
+  short_description: "Physische Segmentierung und nftables überarbeiten"
+  default_prompt: "Prüfe mit $jaylab-segmentierung die IPv4- und IPv6-Isolation ohne VLANs."
