@@ -3,6 +3,9 @@
 Stand: 1. November 2026. Dies ist eine erste Durchsicht, kein vollständiges
 Live-Sicherheitsaudit. Die folgenden Punkte sind im Repository sichtbar;
 ob sie produktiv wirksam sind, muß anhand der laufenden Konfiguration geprüft werden.
+Die ergänzten Live-Befunde B13–B17 stammen aus der lesenden Aufnahme vom
+1. November 2026; deren Umfang und Grenzen stehen im
+[ersten Überarbeitungsschritt](ERSTER-UEBERARBEITUNGSSCHRITT.md).
 
 | ID | Gewicht | Fundstelle | Befund und nächste Prüfung |
 | --- | --- | --- | --- |
@@ -18,6 +21,11 @@ ob sie produktiv wirksam sind, muß anhand der laufenden Konfiguration geprüft 
 | B10 | hoch | Betreiberangabe und dnsmasq-Schnittstellen | Sechs physische Ports stehen sechs logischen Segmenten und einem noch ungeklärten Internet-Uplink gegenüber. Vor Architekturänderung Portbudget und gemeinsame Layer-2-Pfade klären. |
 | B11 | mittel | DHCP-Datei und Betreiberangabe | Mehrere Repeater-Namen und MACs im Bestand, laut Betreiber zwei Geräte. Aktuelle Geräteidentität und Mesh-Verkabelung aufnehmen, keine Gerätezahl aus MAC-Einträgen ableiten. |
 | B12 | hoch | Live-Aufnahme per vertrauenswürdigem Clusterzugang | CT 101 (DNS) und CT 103 (Firewall) verwenden denselben Ed25519-Hostschlüssel. Getrennte Geräteidentitäten mit Rücksicht auf bestehende Clientbindungen herstellen. |
+| B13 | kritisch, live belegt | CT 103, laufender Regelsatz und `/etc/nftables.conf` | Bedingungsloses Accept in INPUT/FORWARD, Policy accept und aktive IPv4-/IPv6-Weiterleitung; nur IPv4-NAT, keine IPv6-Filter. Dienst lädt den offenen persistenten Bestand. Eingrenzung gilt für diesen Netzraum; andere Filterpfade gesondert prüfen. |
+| B14 | hoch, live belegt | CT 101, IPv6-Adressen und Routen | Derselbe öffentliche /64 auf fünf Schnittstellen; mehrere gemeinsame RA-Router und eigene Adressen anderer Schnittstellen als Default-Router. Ursache der RA-/Layer-2-Nebenpfade klären; keine Segmentisolation annehmen. |
+| B15 | hoch, live belegt | proxmox2, Bridge-Lerntabellen | Dieselbe fremde Router-MAC über alle sechs physischen NICs gelernt. Externe Switch-/Mesh-Pfade und mögliche Schleifen prüfen; sechs Host-Bridges beweisen keine sechs getrennten Broadcast-Domänen. |
+| B16 | hoch, live belegt | CT 101, Netzraumfilter und Listener | Keine nftables-/Legacy-Filter; SSH auf allen IPv4-/IPv6-Adressen, DNS auch auf globalen IPv6-Adressen. Verwaltung am direkt mehrfach angebundenen DNS-LXC schützen; Internet-Erreichbarkeit/Rekursion noch nicht geprüft. |
+| B17 | hoch, live belegt | proxmox2, Adressen und Routen | Admin-Adressen auf allen sechs Bridges; Default-Route über vmbr1 zum Firewall-Adminziel auf vmbr0. Proxmox-Hostfilter aktiv. Vor Bereinigung Clusterabhängigkeiten und Verwaltungsrückwege nachweisen. |
 
 Die Durchsicht ändert keine dieser Konfigurationen. Bei weiteren Arbeiten
 Beobachtung, Auswirkung, Gegenprüfung und Behebung getrennt dokumentieren.

@@ -14,8 +14,8 @@ Teil begrenzen; lokale Prüfung und Dokumentation können weitergehen.
 | Z01 | P0 | Bestand und Zugänge nachweisen — in Arbeit | keine | Geräteversionen, sichere Anmeldung und Rechte belegt; alle sechs Hostports mit MAC, Bridge, LXC/Host, Gegenport und Segment zugeordnet; WAN- und Mesh-Pfade erfaßt |
 | Z02 | P0 | Rückweg und Sicherungen nachweisen — offen | Z01 für Live-Teile | Vom Änderungspfad unabhängige Konsole erreichbar; verschlüsselte/externe Sicherungen vorhanden; Router-/DNS-/Switch-Konfiguration und notwendige LXC-Daten testweise isoliert wiederhergestellt; RPO/RTO mit Betreiber festgelegt |
 | Z03 | P0 | Segmentarchitektur ohne VLANs entscheiden — offen | Z01 | Physische Broadcast-Domänen und sechs-Port-Budget belegt; keine unbeabsichtigte Bridge oder Mesh-Umgehung; Entwurf und verbleibende Grenzen dokumentiert |
-| Z04 | P1 | IPv4-/IPv6-Firewall überarbeiten — offen | Entwurf: Z01/Z03; Rollout: Z02 | Freigaben begründet; IPv4 und IPv6 geprüft; neue unerlaubte Verbindungen abgewiesen; nötige Rückwege und ICMPv6 funktionieren; keine pauschale interne Freigabe |
-| Z05 | P1 | DNS, DHCP und RA zuverlässig machen — offen | Z01; Rollout: Z02/Z03 | Zuständigkeiten und Resolverkette eindeutig; keine Listenerkonflikte; interne Namen/PTR, DHCP-Neubezug, IPv6-Default-Router und Ausfallverhalten je Zone nachgewiesen |
+| Z04 | P0 | IPv4-/IPv6-Firewall überarbeiten — offen, U01 zurückgestellt | Entwurf: Z01/Z03; Rollout: Z02 | Freigaben begründet; IPv4 und IPv6 geprüft; neue unerlaubte Verbindungen abgewiesen; nötige Rückwege und ICMPv6 funktionieren; keine pauschale interne Freigabe |
+| Z05 | P0 | DNS, DHCP und RA zuverlässig machen — in Arbeit | Z01; Rollout: konkreter Rückweg, Z02/Z03 soweit betroffen | Zunächst IPv6-/DNS-Ursache für Amazon Music und Netflix im WLAN papalapap eingrenzen und beheben; anschließend eindeutige Resolver-/RA-Zuständigkeiten und zonenbezogene Funktions-/Ausfallnachweise |
 | Z06 | P1 | Cisco und Fritz-Mesh absichern — offen | Z01/Z03; Rollout: Z02 | Modellgerechte Verwaltung, minimale Rechte und geprüfte Hostschlüssel; Portrollen und laufende/gespeicherte Konfiguration belegt; WLAN-/Gastpfade ohne Umgehung getestet |
 | Z07 | P1 | Wiederholbare Deployments einführen — offen | Z01/Z02 | Alt-Synchronisationsskripte durch geprüfte Verfahren ersetzt; Versions-/Syntaxprüfung, Staging, atomare Aktivierung soweit möglich, getesteter Rückweg und Vorher/Nachher-Protokoll; erneuter Lauf erzeugt keine unbeabsichtigte Änderung |
 | Z08 | P2 | Ausfälle und Drift erkennbar machen — offen | Z04–Z07 | Nutzbare Warnungen für DNS-/DHCP-/Internet-/Routerausfälle und Backupfehler; Ressourcengrenzen/Logrotation; Vergleich laufender und gewünschter Konfiguration; Ausfall und Wiederanlauf unter vereinbarten Bedingungen getestet |
@@ -32,12 +32,16 @@ Planungsziel und erteilt keine Freigabe für öffentliche Dienste oder DNS-Ände
 
 ## Erster Arbeitsauftrag
 
-Z01 mit `jaylab-bestandsaufnahme` beginnen. Zunächst lesend NICs, Bridges,
-LXC-Zuordnung, Routen und Switch-/Fritz-Uplinks erheben. Für unbekannte Geräte
-die Angaben aus vertrauenswürdiger Konsole oder bestehender Verwaltung beziehen.
-Wenn Anmeldungen noch fehlen, lokale Befunde weiter untersuchen und die genau
-benötigte fehlende Information benennen. Keine Zuordnung aus `.7` bis `.12`
-oder `enp1s0` bis `enp6s0` ableiten.
+Der Betreiber hat U01 am 1. November 2026 ausdrücklich zurückgestellt.
+Vorrang hat Z05: Amazon-Music-Suche in der Android-App und Netflix sind im
+normalen WLAN `papalapap` unzuverlässig; im Gast-WLAN funktioniert die Musiksuche
+laut Betreiber. IPv6-Routen, Router Advertisements und DNS zunächst vergleichen.
+Ein zeitlicher Zusammenhang oder dieser Vergleich allein beweist noch keine
+IPv6-Ursache. Belegte Fehler gezielt mit Rückweg beheben und die Anwendungen
+anschließend auf dem betroffenen Gerät prüfen.
+
+Der [Vorschlag U01](ERSTER-UEBERARBEITUNGSSCHRITT.md) bleibt erhalten; seine
+Sicherheitsbefunde sind durch die geänderte Reihenfolge nicht behoben.
 
 ## Nachweis zu Z00
 
@@ -61,7 +65,10 @@ OG- und Keller-Repeater sind über geprüfte HTTPS-Websitzungen mit `BoxAdmin=2`
 erreichbar; beide Testsitzungen wurden abgemeldet. Damit sind die Zugänge aller
 13 inventarisierten Komponenten nachgewiesen. DNS ist CT 101 und
 Firewall CT 103 auf proxmox2; PBS ist VM 115 auf proxmox3. Die sechs physischen
-Ports sind weiterhin nicht zugeordnet; Z01 bleibt deshalb in Arbeit.
+Ports waren zu diesem Zeitpunkt noch nicht zugeordnet. Die anschließende
+lesende Aufnahme für [U01](ERSTER-UEBERARBEITUNGSSCHRITT.md) belegt nun die
+lokalen Ketten von sechs NICs zu Bridges und Router-/DNS-LXC. Externe Gegenports,
+Kabelwege und Isolation bleiben offen; Z01 bleibt deshalb in Arbeit.
 
 ## Abschluß einer Änderung
 

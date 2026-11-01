@@ -14,6 +14,7 @@ Die Segmentierung soll mit getrennten physischen Ethernet-Pfaden ohne VLANs erfo
 | [Internet, Domain und Tunnel](docs/INTERNET-DOMAIN-TUNNEL.md) | Feste Vodafone-Adressen, IPv6-/59, jaylab.org und Prüfplanung für cloudflared |
 | [Inventar](inventory/infrastruktur.json) | Maschinenlesbare Geräte, Segmente und sechs noch zuzuordnende Ports |
 | [Ziele](docs/ZIELE.md) | Prioritäten, Abhängigkeiten und überprüfbare Abschlußkriterien |
+| [Erster Überarbeitungsschritt](docs/ERSTER-UEBERARBEITUNGSSCHRITT.md) | Live belegter Handlungsbedarf und U01: Verwaltung gegenüber IoT und Gästen schützen |
 | [Befunde](docs/BEFUNDE.md) | Erste Risiken aus den Dateien; noch kein vollständiges Live-Audit |
 | [Netzfreigaben](docs/NETZFREIGABEN.md) | Entwurf der Verkehrsregeln und ihrer Abnahme |
 | [Betrieb](docs/BETRIEB.md) | Bestandsaufnahme, Deployment und Wiederherstellung |
@@ -47,9 +48,10 @@ Ein Netzverbot der Ausführungsumgebung ist kein Nachweis für einen Gerätefehl
 
 ## Nächster Arbeitsschritt
 
-Der Zugangsteil von **Z01** ist abgeschlossen. Mit `$jaylab-bestandsaufnahme`
-nun die sechs Ports von `proxmox2` bis zu Bridges, LXC-Schnittstellen, Switchports
-und Fritz-Geräten verfolgen. Unabhängig davon können lokale Konfigurationen
-gegen die Befunde geprüft werden. **Z09** ergänzt die Planung für den festen
-Dual-Stack-Anschluß und den bestehenden Cloudflare-Tunnel. Produktive Änderungen folgen erst im Rahmen
-eines entsprechenden Auftrags mit konkretem Rückweg.
+Der Betreiber hat [U01](docs/ERSTER-UEBERARBEITUNGSSCHRITT.md) zurückgestellt.
+Aktuell hat **Z05** Vorrang: IPv6 und DNS für die unzuverlässige Amazon-Music-Suche
+und Netflix im WLAN `papalapap` untersuchen und gezielt berichtigen. Der
+funktionierende Zugriff im Gast-WLAN dient als Vergleich. Der Zugangsteil von
+Z01 und die lokale NIC-/Bridge-/LXC-Zuordnung sind nachgewiesen; die externen
+Netzpfade bleiben teilweise offen. Z09 behandelt weiterhin den festen
+Dual-Stack-Anschluß und den bestehenden Cloudflare-Tunnel.

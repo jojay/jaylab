@@ -38,6 +38,22 @@ flowchart TD
 Gestrichelte Kanten sind zu prüfende Beziehungen, keine bestätigten Kabel.
 Aus der Routerrolle des Hosts folgt nicht, daß nftables im Host statt im LXC läuft.
 
+## Ergänzter Live-Stand vom 1. November 2026
+
+Die lesende Aufnahme für [U01](ERSTER-UEBERARBEITUNGSSCHRITT.md) belegt
+`enp1s0` bis `enp6s0` auf `proxmox2` jeweils an `vmbr0` bis `vmbr5` und die
+zugehörigen Router-/DNS-LXC-Anschlüsse. Diese Zuordnung wurde gemessen und
+nicht aus gleichen Namen abgeleitet. Der Host und CT 101 leiten selbst nicht
+auf IP-Ebene weiter; CT 103 hat IPv4-/IPv6-Weiterleitung eingeschaltet.
+Seine IPv4-Default-Route führt über General zu `192.168.20.5`.
+
+CT 103 filtert im aufgenommenen Netzraum keine Eingänge oder Weiterleitungen;
+der offene Regelsatz ist auch persistent. Auf dem Proxmox-Host sind dagegen
+IPv4-/IPv6-Hostfilter aktiv. CT 101 lernt denselben öffentlichen `/64` auf
+fünf Schnittstellen, und eine gemeinsame Router-MAC wird über alle sechs
+physischen NICs gelernt. Die externen Grenzen sind deshalb weiterhin ungeklärt.
+Der obige Zusammenhang bleibt ein schematischer, kein bestätigter Kabelplan.
+
 ## Dateibestand
 
 `router/dnsmasq/dnsmasq.conf` beschreibt sechs logische Schnittstellen `enp1s0`
