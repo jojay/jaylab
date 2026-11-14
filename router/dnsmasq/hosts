@@ -38,7 +38,7 @@ fd38:21a1:1b97:10::f        pbs
 192.168.10.241   papadesk  
 
 192.168.40.241   cloudflared
-192.168.40.125   erpnext
+192.168.40.106   erpnext
 192.168.40.118   erpnext-old
 
 192.168.40.130  wormate
