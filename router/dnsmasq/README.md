@@ -13,14 +13,17 @@ bestätigt weder die Existenz noch die Erreichbarkeit des genannten Gerätes.
 | `90-jaylab-https-pilot.conf` | `/etc/dnsmasq.d/90-jaylab-https-pilot.conf` |
 | `91-jaylab-grafana.conf` | `/etc/dnsmasq.d/91-jaylab-grafana.conf` |
 | `92-jaylab-authentik.conf` | `/etc/dnsmasq.d/92-jaylab-authentik.conf` |
+| `93-jaylab-proxmox.conf` | `/etc/dnsmasq.d/93-jaylab-proxmox.conf` |
 
 Der laufende Dienst lädt das Verzeichnis mit
 `-7 /etc/dnsmasq.d,.dpkg-dist,.dpkg-old,.dpkg-new`.
-Die drei zusätzlichen Includes sind die maßgeblichen Repository-Fassungen
+Die vier zusätzlichen Includes sind die maßgeblichen Repository-Fassungen
 für Split-DNS; die bisherigen Kopien unter `pilot/https/` wurden entfernt.
-Alle drei Namen liefern lokal A `192.168.10.18` (Caddy), AAAA und HTTPS
+Die drei Caddy-Namen liefern lokal A `192.168.10.18` (Caddy), AAAA und HTTPS
 ohne Antwortdaten. Die Authentik-Backend-Adresse `.10.19` wird nicht als
-Browserziel ausgegeben.
+Browserziel ausgegeben. `pve`, `pve2` und `pve3.jaylab.org` zeigen
+mit vollständigem Domainnamen direkt auf `192.168.10.4`, `.7` und `.13`;
+auch dort bleiben AAAA und HTTPS ohne Antwortdaten.
 
 Beim Abgleich wurden außerdem bereits auf dem Server vorhandene, bisher im
 Repository fehlende DHCP-Einträge für icinga, wiki, dokuwiki, bookstack,
@@ -35,7 +38,7 @@ DHCP-/RA-Verteilung wurde bei diesem Abgleich nicht geändert.
 
 ## Synchronisierung
 
-Das überarbeitete `synch.sh` synchronisiert genau die sieben oben genannten
+Das überarbeitete `synch.sh` synchronisiert genau die acht oben genannten
 Dateien. Aus Bash/WSL, unabhängig vom Arbeitsverzeichnis:
 
 ```bash
@@ -55,7 +58,7 @@ Vorversionen samt Dateirechten. Fremde Includes bleiben erhalten. Identische
 Dateien lösen keinen Neustart aus. Bei Änderungen werden die Dateien auf
 Platte ersetzt und sämtliche tatsächlichen Includes mit `checkconfig`
 geprüft, bevor der laufende Dienst neu gestartet wird. Danach werden
-Dienstzustand sowie die drei Split-DNS-Namen über UDP/TCP geprüft.
+Dienstzustand sowie die sechs Split-DNS-Namen über UDP/TCP geprüft.
 
 Bei Fehler oder abfangbarem Abbruch werden die verwalteten Vorversionen
 zurückgespielt und dnsmasq erneut geprüft und gestartet. Ein Stromausfall

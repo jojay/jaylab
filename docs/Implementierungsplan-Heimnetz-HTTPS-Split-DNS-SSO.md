@@ -29,7 +29,7 @@ lesen. Frühere Messungen vor einem Eingriff erneut bestätigen.
 | `dfderp.jaylab.org` | Caddy, Port 443 | Bestehenden Eintrag und Tunnelroute erfassen und bei Bedarf beibehalten | Bestehende Anmeldung, danach authentik mit Testkonto |
 | `pve.jaylab.org` | Proxmox-Knoten, Port 8006 | Kein öffentlicher Dienst-Eintrag und keine Tunnelroute | Proxmox-Realm für authentik, `root@pam` als lokaler Notzugang |
 
-Die Namen für Grafana und Proxmox sind Vorschläge. `jaylab.local` kann parallel als vorhandene Gerätenamensdomäne dienen. Verwende für HTTPS den Namen aus der Tabelle, der zum Zertifikat paßt.
+Die Namen für Grafana und Proxmox sind umgesetzt; für die weiteren Knoten gelten `pve2.jaylab.org` und `pve3.jaylab.org`. `jaylab.local` kann parallel als vorhandene Gerätenamensdomäne dienen. Verwende für HTTPS den Namen aus der Tabelle, der zum Zertifikat paßt.
 
 ### Festgelegte Betriebsformen
 
@@ -264,7 +264,16 @@ die folgenden anwendungsübergreifenden Punkte bleiben deshalb teilweise offen.
 - [ ] **Grafana – ergänzende Abnahme:** Zugewiesene Viewer-Rolle nach
   tatsächlichem SSO ausdrücklich prüfen. Abmeldung, Rechteentzug und
   Verhalten bei abgeschaltetem Authentik gesondert prüfen.
-- [ ] **Proxmox:** `pve.jaylab.org` intern direkt auf den Knoten zeigen lassen und dort ein eigenes ACME-DNS-Zertifikat für Port 8006 einrichten. Anschließend einen OIDC-Realm hinzufügen. Mit einem Testkonto die ACLs prüfen, ebenso den direkten `root@pam`-Zugang bei abgeschaltetem authentik.
+- [x] **Proxmox – Einrichtung:** `pve`, `pve2` und `pve3.jaylab.org` intern
+  direkt auf die drei Knoten, eigene ACME-DNS-Zertifikate für Port 8006 und
+  bestehenden OIDC-Realm auf den neuen Authentik-Client umgestellt.
+  Benutzer und ACLs unverändert; automatische Benutzeranlage abgeschaltet.
+- [x] **Proxmox – Zertifikate und SSO:** Auf allen drei Knoten vom Betreiber
+  am 15. November 2026 bestätigt. Siehe
+  [Änderungsbeleg](AENDERUNG-PROXMOX-HTTPS-SSO-2026-11-15.md).
+- [ ] **Proxmox – ergänzende Abnahme:** Gastkonsole, tatsächliche ACL-Wirkung,
+  frische lokale `root@pam`-Sitzung und Notzugang bei ausgefallenem Authentik
+  prüfen; Abmeldung und Rechteentzug gesondert prüfen.
 - [ ] **ERPNext:** Zuerst den bisherigen Login und die bestehenden API-Aufrufe dokumentieren. In der installierten Frappe-Version den benutzerdefinierten Social Login Key und die tatsächlich erzeugte Redirect-URI prüfen. Authentik zunächst parallel mit einem bestehenden Testkonto und dessen E-Mail-Zuordnung erproben. ERPNext-Rollen und API-Zugriff mit demselben Testumfang nachprüfen.
 - [ ] **Proxmox-Cluster ergänzend:** Für alle drei tatsächlich benutzten
   Knotennamen Zertifikatsnamen, Redirect-URIs und Realm-Verhalten erfassen.

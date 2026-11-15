@@ -20,6 +20,12 @@ ist aktiviert; die funktionierende SSO-Anmeldung wurde vom Betreiber am
 15. November 2026 bestätigt. Auch die lokale Anmeldung mit `admin` ohne SSO
 ist vom Betreiber bestätigt. Ergänzende Rollen-, Sitzungs- und Ausfalltests
 bleiben offen.
+Die [drei Proxmox-Knoten](AENDERUNG-PROXMOX-HTTPS-SSO-2026-11-15.md) sind
+unter `pve`, `pve2` und `pve3.jaylab.org` auf Port 8006 mit eigenen
+ACME-Zertifikaten und dem erneuerten Authentik-Realm angebunden. Zertifikate
+und SSO sind auf allen drei Knoten vom Betreiber bestätigt. Bestehende
+Benutzer/ACLs blieben unverändert. Gastkonsole, PAM-Notzugang und Ausfalltests
+bleiben offen, ebenso der Abgleich der alten öffentlichen Proxmox-Tunnelroute.
 Die ursprünglichen Entscheidungen bleiben erhalten.
 
 ## Verbindliche Grundlage
