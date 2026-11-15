@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('nodered', 'mqtt', 'mqtt-tls', 'influxdb', 'shc')]
+    [ValidateSet('nodered', 'mqtt', 'mqtt-tls', 'influxdb', 'shc', 'zigbee')]
     [string]$Service
 )
 
@@ -32,9 +32,17 @@ switch ($Service) {
         $profile = 'jaylab-proxmox'
         $command = 'pct exec 105 -- node -'
     }
+    'zigbee' {
+        $profile = 'jaylab-proxmox'
+        $command = 'pct exec 121 -- node -'
+    }
 }
-if ($Service -in @('shc', 'mqtt-tls')) {
-    $scriptName = if ($Service -eq 'shc') { 'Test-JaylabShc.js' } else { 'Test-JaylabMqttTls.js' }
+if ($Service -in @('shc', 'mqtt-tls', 'zigbee')) {
+    $scriptName = switch ($Service) {
+        'shc' { 'Test-JaylabShc.js' }
+        'mqtt-tls' { 'Test-JaylabMqttTls.js' }
+        'zigbee' { 'Test-JaylabZigbee.js' }
+    }
     Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot $scriptName) |
         & wsl.exe --exec ssh -F $wslConfig $profile $command
 } else {

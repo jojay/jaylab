@@ -22,6 +22,8 @@ Die Segmentierung soll mit getrennten physischen Ethernet-Pfaden ohne VLANs erfo
 | [Zugangsbericht](INFRASTRUKTUR-ZUGAENGE.md) | Messungen vom 31. Oktober und 1. November 2026 |
 | [Zugangseinrichtung](docs/ZUGANGSEINRICHTUNG.md) | Geprüfte Verwaltungszugänge zu allen 13 inventarisierten Komponenten |
 | [Automatisierungszugänge](docs/AUTOMATISIERUNG-ZUGAENGE.md) | Node-RED, MQTT, InfluxDB und geprüfter Bosch-SHC-API-Zugang |
+| [Zigbee2MQTT und Funkempfang](docs/ZIGBEE2MQTT-ZUGANG-UND-EMPFANG.md) | Wiederhergestellter MQTT-Zugang, Frontend, Gerätebestand und begrenzter Live-Empfangstest |
+| [HTTPS-/Split-DNS-/SSO-Prüfung](docs/PRUEFUNG-HTTPS-SPLIT-DNS-SSO.md) | Anwendbarkeit des Implementierungsplans, Live-Bestand und ergänzte Authentik-Planung |
 
 Die fünf projektspezifischen Skills liegen in `.agents/skills/`. Diese Ablage
 entspricht dem von der [offiziellen OpenAI-Dokumentation beschriebenen Aufbau](https://developers.openai.com/blog/skills-agents-sdk).
