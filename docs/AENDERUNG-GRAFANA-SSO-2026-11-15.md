@@ -80,8 +80,16 @@ Strikte Rollenprüfung und Gruppenbegrenzung bleiben aktiv. Die vorherige
 INI liegt zusätzlich unter `grafana.ini.before-role-fix` im geschützten
 Gastverzeichnis. Aktuelle INI-SHA256:
 `fc5866d913314da2aabd392e741bcb5d6049dbc4a5cf98ab89ed7af8f9dd2228`.
-Grafana wurde erfolgreich neu gestartet; erneute Browserabnahme steht aus.
+Grafana wurde erfolgreich neu gestartet. Am 15. November 2026 bestätigt der
+Betreiber anschließend: „grafana sso funktioniert“. Die SSO-Anmeldung ist
+damit als Betreiberabnahme bestanden.
 
-Browser-Anmeldung, Viewer-Rolle nach tatsächlichem SSO, Abmeldung und erneuter
-lokaler Notzugangstest stehen noch aus. Verwaltungskonto-MFA, externes SSO
+Die Anmeldung mit dem vorhandenen lokalen `admin`-Konto ohne SSO wurde
+anschließend ebenfalls vom Betreiber am 15. November 2026 bestätigt.
+Der lokale Notzugangstest ist damit bestanden. Ein Test bei tatsächlich
+abgeschaltetem Authentik ist dadurch noch nicht belegt.
+
+Die ausdrückliche Prüfung der Viewer-Rolle nach tatsächlichem SSO, Abmeldung,
+Rechteentzug und Verhalten bei Authentik-Ausfall stehen noch aus.
+Verwaltungskonto-MFA, externes SSO
 und Mobilfunkabnahme sind nicht als bestanden bestätigt.

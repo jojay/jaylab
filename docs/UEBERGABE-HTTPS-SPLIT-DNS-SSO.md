@@ -16,7 +16,10 @@ mit TLS-Prüfung auf Caddy; Mobilfunkabnahme steht noch aus. Die neue
 unter `.10.19`; `login.jaylab.org` führt lokal über Caddy. Anmeldung von `jay`
 bestätigt, TOTP eingerichtet. Native Datenbank- und vollständige isolierte
 VM-Wiederherstellung sind geprüft. Der [Grafana-SSO-Pilot](AENDERUNG-GRAFANA-SSO-2026-11-15.md)
-ist inzwischen aktiviert; sein Browser-Anmeldetest steht noch aus.
+ist aktiviert; die funktionierende SSO-Anmeldung wurde vom Betreiber am
+15. November 2026 bestätigt. Auch die lokale Anmeldung mit `admin` ohne SSO
+ist vom Betreiber bestätigt. Ergänzende Rollen-, Sitzungs- und Ausfalltests
+bleiben offen.
 Die ursprünglichen Entscheidungen bleiben erhalten.
 
 ## Verbindliche Grundlage

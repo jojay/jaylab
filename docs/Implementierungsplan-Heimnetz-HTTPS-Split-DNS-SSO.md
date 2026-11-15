@@ -1,5 +1,15 @@
 # Implementierungsplan für HTTPS, Split-DNS und SSO im Heimnetz
 
+Abgleich vom 15. November 2026: Haken kennzeichnen belegte Umsetzung,
+nicht automatisch die vollständige Abnahme einer Phase. Zusammengesetzte
+Punkte bleiben offen, wenn darin noch Prüfungen oder weitere Anwendungen
+fehlen. Nachweise: [Phase 0](PHASE0-HTTPS-SPLIT-DNS-SSO.md),
+[HTTPS-/DNS-Pilot](PILOT-HTTPS-SPLIT-DNS.md),
+[Grafana-HTTPS](AENDERUNG-GRAFANA-HTTPS-2026-11-15.md),
+[Tunnel](AENDERUNG-GRAFANA-TUNNEL-2026-11-15.md),
+[Authentik](AENDERUNG-AUTHENTIK-BASIS-2026-11-15.md) und
+[Grafana-SSO](AENDERUNG-GRAFANA-SSO-2026-11-15.md).
+
 ## Auftrag für Codex
 
 > Setze diesen Plan phasenweise um. Beginne mit der Bestandsaufnahme im Projektordner und ermittle, welche Systeme du von deiner Umgebung aus erreichen kannst. Verwende die vorhandene Infrastruktur und übernimm bestätigte Werte aus der laufenden Konfiguration. Ermittle vor jeder Umstellung den Istzustand, den konkreten Konfigurationsunterschied und den passenden Rückweg. Arbeite zuerst an einem Pilotgerät. Prüfe nach jedem Schritt die angegebenen Abnahmekriterien und protokolliere die Ergebnisse. Wenn dir der Zugriff auf ein System fehlt, bereite die genaue Änderung samt Prüfkommando für dieses System vor und fahre mit den unabhängigen Schritten fort.
@@ -93,9 +103,9 @@ benötigen; er wird durch diesen Plan nicht automatisch eingerichtet.
 - [ ] Erfasse bestehende IPv4-Portweiterleitungen und IPv6-Freigaben für
   Caddy, Authentik, Proxmox und die Backends. Ordne jede vorhandene globale
   Backend-Adresse einem tatsächlichen Segment und Filterpfad zu.
-- [ ] Ermittle die LAN-Adressen von Resolver, Proxmox, Caddy-LXC, Authentik-VM, Grafana, ERPNext und `cloudflared`. Prüfe, auf welchem Host der Tunnel läuft und ob er lokal oder im Cloudflare-Dashboard verwaltet wird.
-- [ ] Ermittle die autoritativen Nameserver von `jaylab.org`, die vorhandenen öffentlichen Dienst-Einträge, Wildcard-Einträge und veröffentlichte Tunnelrouten. Prüfe, ob Cloudflare zugleich der DNS-Anbieter ist. Ein Cloudflare Tunnel allein belegt das nicht.
-- [ ] Erfasse die aktuelle Grafana-Route zu `https://grafana.local:3443` und den Einsatz von `noTLSVerify`. Prüfe das tatsächliche Zertifikat und den vom Backend erwarteten Host-Header.
+- [x] Ermittle die LAN-Adressen von Resolver, Proxmox, Caddy-LXC, Authentik-VM, Grafana, ERPNext und `cloudflared`. Prüfe, auf welchem Host der Tunnel läuft und ob er lokal oder im Cloudflare-Dashboard verwaltet wird.
+- [x] Ermittle die autoritativen Nameserver von `jaylab.org`, die vorhandenen öffentlichen Dienst-Einträge, Wildcard-Einträge und veröffentlichte Tunnelrouten. Prüfe, ob Cloudflare zugleich der DNS-Anbieter ist. Ein Cloudflare Tunnel allein belegt das nicht.
+- [x] Erfasse die aktuelle Grafana-Route zu `https://grafana.local:3443` und den Einsatz von `noTLSVerify`. Prüfe das tatsächliche Zertifikat und den vom Backend erwarteten Host-Header.
 - [ ] Erfasse die aktuelle ERPNext-/Frappe-Version, den externen Basisnamen, den aktiven Entra-Login und vorhandene API-Verbraucher. Prüfe den direkten lokalen Proxmox-Login in einer frischen Sitzung.
 - [ ] Sichere die für die jeweilige Phase betroffenen Konfigurationen. Verwende vorhandene Versionsverwaltung oder Exporte. Halte Token, Client-Secrets, Tunnel-Zugangsdaten und private Schlüssel aus Git und Arbeitsprotokollen heraus.
 
@@ -103,13 +113,17 @@ benötigen; er wird durch diesen Plan nicht automatisch eingerichtet.
 
 ## Phase 1 · Lokales DNS mit einem Pilotgerät erproben
 
-- [ ] Verwende den vorhandenen dnsmasq-LXC für gezielte Host-Überschreibungen. Lege für den Pilotnamen `grafana.jaylab.org` einen A-Eintrag auf Caddys feste LAN-IPv4-Adresse an. Ergänze AAAA nur, wenn Caddy über eine stabile interne IPv6-Adresse erreichbar sein soll. Für diese Umsetzung keinen zweiten Resolver installieren.
+Teilstand: Windows-Pilot verwendet ausschließlich `.10.6`; DNS-Paketpfad
+ist nachgewiesen. Echter Dual-Stack-/Mobilgerätetest bleibt offen. Caddy und
+Authentik sind vorerst IPv4-only; ein lokales AAAA-Ziel ist nicht eingerichtet.
+
+- [x] Verwende den vorhandenen dnsmasq-LXC für gezielte Host-Überschreibungen. Lege für den Pilotnamen `grafana.jaylab.org` einen A-Eintrag auf Caddys feste LAN-IPv4-Adresse an. Ergänze AAAA nur, wenn Caddy über eine stabile interne IPv6-Adresse erreichbar sein soll. Für diese Umsetzung keinen zweiten Resolver installieren.
 - [ ] Verwende für ein lokales AAAA-Ziel eine nachgewiesen erreichbare
   ULA-Adresse oder eine stabile Adresse aus dem tatsächlich gerouteten
   LAN-`/64` innerhalb des zugeteilten `/59`. Weder das gesamte `/59` noch die
   separate IPv6-Anschlußadresse ist ein gültiges Hostziel. Prüfe, daß auch ein
   lokales globales IPv6-Ziel über den LAN-Pfad erreicht wird.
-- [ ] Beantworte für den überschriebenen Namen alle angefragten Typen lokal. Bei dnsmasq die gezielte `address`-Regel durch die passende `local`-Regel ergänzen, damit auch nicht lokal belegte Typen nicht öffentlich aufgelöst werden. Wenn kein lokaler AAAA- oder HTTPS-Record konfiguriert ist, muß der Resolver ohne Adresse bzw. ohne Daten antworten. Andere Namen unter `jaylab.org` sollen weiter normal auflösbar sein. Das Verhalten wurde mit dnsmasq 2.91 isoliert geprüft; vor Aktivierung die tatsächlichen Includes und Antworten erneut prüfen.
+- [x] Beantworte für den überschriebenen Namen alle angefragten Typen lokal. Bei dnsmasq die gezielte `address`-Regel durch die passende `local`-Regel ergänzen, damit auch nicht lokal belegte Typen nicht öffentlich aufgelöst werden. Wenn kein lokaler AAAA- oder HTTPS-Record konfiguriert ist, muß der Resolver ohne Adresse bzw. ohne Daten antworten. Andere Namen unter `jaylab.org` sollen weiter normal auflösbar sein. Das Verhalten wurde mit dnsmasq 2.91 isoliert geprüft; vor Aktivierung die tatsächlichen Includes und Antworten erneut prüfen.
 - [ ] Stelle vorerst nur das Pilotgerät und bei Bedarf die beteiligten Server auf den lokalen Resolver ein. Prüfe auch DNS-over-HTTPS im Browser, Androids „Privates DNS“, VPN-Profile und explizite Web-Proxys auf alternative Auflösungswege.
 - [ ] Prüfe bei einem Router mit DNS-Rebind-Schutz, ob die eigene lokale Antwort durchgelassen wird. Falls eine Ausnahme nötig ist, beschränke sie auf die betroffenen Namen bzw. die eigene Zone.
 
@@ -119,12 +133,12 @@ benötigen; er wird durch diesen Plan nicht automatisch eingerichtet.
 
 ## Phase 2 · Caddy und Let’s Encrypt für Grafana
 
-- [ ] Stelle Caddy im festgelegten eigenen Debian-LXC mit `unprivileged: 1` und fester LAN-Adresse bereit. Installiere Caddy nativ als systemd-Dienst mit eigenem Dienstbenutzer. Docker, Host-Docker-Socket und Geräteweiterreichung sind hierfür nicht vorgesehen. Prüfe die tatsächliche Unit samt Schutzoptionen; zusätzliche LXC-Features nur bei belegtem Bedarf aktivieren, nicht pauschal Privilegien erweitern oder AppArmor abschalten.
-- [ ] Verwende für das belegte Cloudflare-DNS einen versionierten Caddy-Build mit `dns.providers.cloudflare` und einen auf `jaylab.org` begrenzten API-Token mit `Zone:Read` und `DNS:Edit`. Bewahre den Token in der geschützten lokalen Dienstkonfiguration auf. Lege einen reproduzierbaren Aktualisierungsweg fest und prüfe nach jedem Binärwechsel mit `caddy list-modules`, daß das DNS-Modul erhalten ist.
-- [ ] Konfiguriere ACME mit DNS-01. Prüfe die Ausstellung im Let’s-Encrypt-Staging und beziehe danach das Browser-vertrauenswürdige Produktionszertifikat. Verwende für Staging einen separaten Testzustand oder getrennten Zertifikatsspeicher. Wenn der interne Resolver die Abfrage der öffentlichen Challenge-Daten beeinflußt, verwende für Caddys DNS-01-Prüfung einen Resolver mit öffentlicher DNS-Sicht. Client-Anfragen benutzen weiter den internen Resolver.
-- [ ] Richte Grafana als erste Proxy-Route ein. Verwende eine feste interne Backend-Adresse oder einen eigenen internen Backend-Namen. Wenn `grafana.local:3443` über HTTPS weiterläuft, konfiguriere in Caddy die passende Vertrauenskette und bei Bedarf `tls_server_name`. Vermeide eine Proxy-Schleife über den Frontend-Namen. Gleiche Grafanas `root_url` mit der vorgesehenen Browseradresse ab.
-- [ ] Validiere die Caddy-Konfiguration vor dem Reload. Halte den Zertifikatsspeicher persistent. Prüfe die Protokolle auf Probleme bei Ausstellung und Erneuerung.
-- [ ] Sichere Konfiguration, Zertifikatsspeicher und benötigte Volumes des
+- [x] Stelle Caddy im festgelegten eigenen Debian-LXC mit `unprivileged: 1` und fester LAN-Adresse bereit. Installiere Caddy nativ als systemd-Dienst mit eigenem Dienstbenutzer. Docker, Host-Docker-Socket und Geräteweiterreichung sind hierfür nicht vorgesehen. Prüfe die tatsächliche Unit samt Schutzoptionen; zusätzliche LXC-Features nur bei belegtem Bedarf aktivieren, nicht pauschal Privilegien erweitern oder AppArmor abschalten.
+- [x] Verwende für das belegte Cloudflare-DNS einen versionierten Caddy-Build mit `dns.providers.cloudflare` und einen auf `jaylab.org` begrenzten API-Token mit `Zone:Read` und `DNS:Edit`. Bewahre den Token in der geschützten lokalen Dienstkonfiguration auf. Lege einen reproduzierbaren Aktualisierungsweg fest und prüfe nach jedem Binärwechsel mit `caddy list-modules`, daß das DNS-Modul erhalten ist.
+- [x] Konfiguriere ACME mit DNS-01. Prüfe die Ausstellung im Let’s-Encrypt-Staging und beziehe danach das Browser-vertrauenswürdige Produktionszertifikat. Verwende für Staging einen separaten Testzustand oder getrennten Zertifikatsspeicher. Wenn der interne Resolver die Abfrage der öffentlichen Challenge-Daten beeinflußt, verwende für Caddys DNS-01-Prüfung einen Resolver mit öffentlicher DNS-Sicht. Client-Anfragen benutzen weiter den internen Resolver.
+- [x] Richte Grafana als erste Proxy-Route ein. Verwende eine feste interne Backend-Adresse oder einen eigenen internen Backend-Namen. Wenn `grafana.local:3443` über HTTPS weiterläuft, konfiguriere in Caddy die passende Vertrauenskette und bei Bedarf `tls_server_name`. Vermeide eine Proxy-Schleife über den Frontend-Namen. Gleiche Grafanas `root_url` mit der vorgesehenen Browseradresse ab.
+- [x] Validiere die Caddy-Konfiguration vor dem Reload. Halte den Zertifikatsspeicher persistent. Prüfe die Protokolle auf Probleme bei Ausstellung und Erneuerung.
+- [x] Sichere Konfiguration, Zertifikatsspeicher und benötigte Volumes des
   LXC. Zusätzliche Datenvolumes als von Proxmox verwaltete Volumes vorsehen;
   gewöhnliche Host-Bind-Mounts nicht als automatisch mitgesichert behandeln.
   Automatischen Start und Wiederherstellung des LXC prüfen.
@@ -135,7 +149,7 @@ benötigen; er wird durch diesen Plan nicht automatisch eingerichtet.
 
 ## Phase 3 · Tunnel und DNS im Heimnetz umstellen
 
-- [ ] Führe die bestehende öffentliche Grafana-Route, sofern sie gebraucht wird, auf Caddys LAN-Endpunkt. Wenn der Tunnel als Service-URL die IP-Adresse nutzt, setze `originServerName` auf `grafana.jaylab.org` und stelle sicher, daß der HTTP-Host auf die richtige Caddy-Route zeigt. Setze `noTLSVerify: false`, sobald der HTTPS-Endpunkt geprüft ist. Verwende als Tunnelziel einen internen Endpunkt, der sich zuverlässig unabhängig vom öffentlichen Tunnel-DNS auflösen läßt.
+- [x] Führe die bestehende öffentliche Grafana-Route, sofern sie gebraucht wird, auf Caddys LAN-Endpunkt. Wenn der Tunnel als Service-URL die IP-Adresse nutzt, setze `originServerName` auf `grafana.jaylab.org` und stelle sicher, daß der HTTP-Host auf die richtige Caddy-Route zeigt. Setze `noTLSVerify: false`, sobald der HTTPS-Endpunkt geprüft ist. Verwende als Tunnelziel einen internen Endpunkt, der sich zuverlässig unabhängig vom öffentlichen Tunnel-DNS auflösen läßt.
 - [ ] Prüfe den Fernzugriff über Mobilfunk. Falls Cloudflare Access aktiv ist, geht der LAN-Aufruf direkt zu Caddy und damit an Cloudflare Access vorbei. Prüfe daher die Anmeldung und Berechtigungen in der Anwendung auf beiden Wegen.
 - [ ] Verteile über DHCPv4 und IPv6-Router-Advertisements (RDNSS), soweit unterstützt auch über DHCPv6, ausschließlich lokale Resolver mit identischen Überschreibungen. Verwende einen zweiten lokalen Resolver, falls Ausfallsicherheit nötig ist.
 - [ ] Aktiviere die weiteren Host-Einträge erst, wenn das jeweilige HTTPS-Ziel bereitsteht. Prüfe mindestens einen Arbeitsplatzrechner und ein Mobilgerät nach Aktualisierung der Netzwerkeinstellungen.
@@ -161,12 +175,12 @@ kontrolliert berichtigt. Die gemeinsamen k3s-Aliase dabei nicht pauschal
 löschen. Einzelbelege und die berichtigte Einordnung stehen in der
 [Anwendbarkeitsprüfung](PRUEFUNG-HTTPS-SPLIT-DNS-SSO.md).
 
-- [ ] Eine eigene Authentik-VM mit neuer PostgreSQL-Datenbank vorsehen.
+- [x] Eine eigene Authentik-VM mit neuer PostgreSQL-Datenbank vorsehen.
   Proxmox-Host, Storage, freie VM-ID, feste LAN-Adresse und Verwaltungsweg
   anhand des aktuellen Bestands festlegen. Die öffentliche Anschluß-IPv4
   wird der VM nicht zugewiesen. IPv6 nur aus einem nachgewiesenen LAN-Präfix
   gemäß der obigen Adreßplanung verwenden.
-- [ ] `https://login.jaylab.org` als gemeinsamen Browser- und OIDC-Namen der
+- [x] `https://login.jaylab.org` als gemeinsamen Browser- und OIDC-Namen der
   neuen Installation festlegen. Mit lokaler DNS-Sicht und internem Zugang
   beginnen; eine externe Veröffentlichung folgt erst nach Abschnitt 4.5.
 - [ ] Neue Benutzer, Gruppen, Provider und anwendungsspezifische Clients
@@ -176,7 +190,7 @@ löschen. Einzelbelege und die berichtigte Einordnung stehen in der
 
 ### 4.2 · Lokale Basis, TLS und Betrieb vorbereiten
 
-- [ ] Authentik neu mit festgelegten Versionen der offiziellen Docker-
+- [x] Authentik neu mit festgelegten Versionen der offiziellen Docker-
   Compose-Konfiguration und PostgreSQL in der vorgesehenen VM installieren.
   Server und Worker bereitstellen. Als Startgröße sind 2 vCPU und 4 GiB RAM
   vorgesehen, dazu zunächst etwa 32 GiB virtuelle Platte; freie Ressourcen
@@ -185,7 +199,7 @@ löschen. Einzelbelege und die berichtigte Einordnung stehen in der
   Anwendungen in diesen Compose-Host aufnehmen. Der Gastagent ersetzt keinen
   nativen PostgreSQL-Dump und dessen Wiederherstellungsprüfung.
   Keine zusätzliche Netzbrücke zwischen Vertrauenszonen schaffen.
-- [ ] Neue Datenbankzugänge, `AUTHENTIK_SECRET_KEY` und Signing-Keys erzeugen.
+- [x] Neue Datenbankzugänge, `AUTHENTIK_SECRET_KEY` und Signing-Keys erzeugen.
   Secrets nur in der geschützten lokalen Dienstkonfiguration und vorgesehenen
   sicheren Ablage halten. Vor einer Anwendungsanbindung den gesunden Zustand
   von Datenbank, Server und Worker nachweisen.
@@ -201,7 +215,7 @@ löschen. Einzelbelege und die berichtigte Einordnung stehen in der
   `AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS` nur die tatsächlich unmittelbar
   vorgeschalteten Proxyquellen berücksichtigen; keine pauschale Freigabe des
   gesamten Heimnetzes. Caddy-Quelladresse und IPv4-/IPv6-Pfad vorher messen.
-- [ ] Den Docker-Socket nicht für den eingebetteten Outpost voraussetzen.
+- [x] Den Docker-Socket nicht für den eingebetteten Outpost voraussetzen.
   Falls automatische Outpost-Verwaltung benötigt wird, den tatsächlichen
   Bedarf gesondert festlegen; ein allgemeiner Docker-Socket-Zugriff ist keine
   Voraussetzung für native OIDC-Clients.
@@ -211,6 +225,12 @@ löschen. Einzelbelege und die berichtigte Einordnung stehen in der
   Ping prüfen. Ein grüner HTTP-Healthcheck ersetzt keinen OIDC-Anmeldetest.
 
 ### 4.3 · Konten, Rechte und Wiederherstellung
+
+Teilstand: `jay` angemeldet und TOTP eingerichtet; getrenntes `akadmin`
+vorhanden. Unberechtigtes Testkonto geprüft und anschließend deaktiviert.
+Verwaltungskonto-MFA, vollständiger Notzugang und WAN-Ausfalltest fehlen noch.
+Grafana hat einen eigenen Client und eine auf `jay` begrenzte Viewer-Gruppe;
+die folgenden anwendungsübergreifenden Punkte bleiben deshalb teilweise offen.
 
 - [ ] Ein neues lokales authentik-Verwaltungskonto, ein gewöhnliches Testkonto
   und ein unberechtigtes Testkonto anlegen. Verwaltung mit MFA
@@ -233,7 +253,17 @@ löschen. Einzelbelege und die berichtigte Einordnung stehen in der
 
 ### 4.4 · Anwendungen einzeln anbinden
 
-- [ ] **Grafana:** Generic OAuth einrichten, mit einem Testkonto anmelden und die zugewiesene Rolle prüfen. Dann aus einer neuen Browsersitzung den lokalen Notzugang testen.
+- [x] **Grafana – Einrichtung:** Generic OAuth mit eigenem Authentik-Client,
+  PKCE, geprüftem Callback und JWKS einrichten; bestehendes Viewer-Konto
+  gezielt zuordnen, lokalen Administrator erhalten. Rollenausdruck korrigiert
+  und Grafana im Authentik-Portal sichtbar geschaltet.
+- [x] **Grafana – SSO-Anmeldung:** Nach der Rollenkorrektur durch den
+  Betreiber am 15. November 2026 bestätigt: „grafana sso funktioniert“.
+- [x] **Grafana – lokaler Notzugang:** Anmeldung mit dem vorhandenen
+  `admin`-Konto ohne SSO vom Betreiber am 15. November 2026 bestätigt.
+- [ ] **Grafana – ergänzende Abnahme:** Zugewiesene Viewer-Rolle nach
+  tatsächlichem SSO ausdrücklich prüfen. Abmeldung, Rechteentzug und
+  Verhalten bei abgeschaltetem Authentik gesondert prüfen.
 - [ ] **Proxmox:** `pve.jaylab.org` intern direkt auf den Knoten zeigen lassen und dort ein eigenes ACME-DNS-Zertifikat für Port 8006 einrichten. Anschließend einen OIDC-Realm hinzufügen. Mit einem Testkonto die ACLs prüfen, ebenso den direkten `root@pam`-Zugang bei abgeschaltetem authentik.
 - [ ] **ERPNext:** Zuerst den bisherigen Login und die bestehenden API-Aufrufe dokumentieren. In der installierten Frappe-Version den benutzerdefinierten Social Login Key und die tatsächlich erzeugte Redirect-URI prüfen. Authentik zunächst parallel mit einem bestehenden Testkonto und dessen E-Mail-Zuordnung erproben. ERPNext-Rollen und API-Zugriff mit demselben Testumfang nachprüfen.
 - [ ] **Proxmox-Cluster ergänzend:** Für alle drei tatsächlich benutzten
@@ -278,6 +308,12 @@ löschen. Einzelbelege und die berichtigte Einordnung stehen in der
 
 ### 4.6 · Abnahme, Sicherung und Rücknahme
 
+- [x] Native Authentik-Datenbanksicherung isoliert wiederhergestellt und
+  zentrale Tabellen verglichen; vollständigen PBS-Restore ohne Netzkarte
+  mit gesunden Diensten, TLS und Dateivergleich geprüft. Testkopien entfernt.
+  Der unten verlangte tatsächliche Anmeldungstest nach Wiederherstellung
+  bleibt noch offen.
+
 | Prüfung | Erwartet |
 |---|---|
 | Frische lokale Sitzung, gewöhnliches Testkonto | Anmeldung über `login.jaylab.org`, nur zugewiesene Anwendungsrechte |
@@ -290,7 +326,7 @@ löschen. Einzelbelege und die berichtigte Einordnung stehen in der
 | Öffentlich freigegebene Anwendung | Vollständige externe OIDC-Anmeldung; kein Zirkelschluß mit Cloudflare Access |
 | Direkter Backend-Port, IPv4 und IPv6 | Kein ungeprüfter Umgehungsweg zur vorgesehenen Proxyanmeldung |
 
-- [ ] PostgreSQL mit nativem Datenbank-Dump sichern, außerdem zur gewählten
+- [x] PostgreSQL mit nativem Datenbank-Dump sichern, außerdem zur gewählten
   Version gehörende Compose-/Umgebungskonfiguration, `AUTHENTIK_SECRET_KEY`,
   eingebundene Dateien und Medien sichern. Signing-Keys bzw. externe
   Schlüsselablagen und Provider-Konfigurationen berücksichtigen. Secrets
