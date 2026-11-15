@@ -3,6 +3,22 @@
 Stand: 15. November 2026. Diese Übergabe hält die beschlossenen Planungswerte
 und die vor der Umsetzung noch zu prüfenden Voraussetzungen fest.
 
+Fortsetzung: Die [aktuelle Phase-0-Aufnahme](PHASE0-HTTPS-SPLIT-DNS-SSO.md)
+bestätigt den Bestand und dokumentiert Restprüfungen. Der
+[datenlose HTTPS-Pilot](PILOT-HTTPS-SPLIT-DNS.md) läuft als CT 131 unter
+`192.168.10.18`. DNS-01, Browser-HTTPS, Split-DNS, Gastneustart und isolierter
+PBS-Restore sind abgenommen. [Grafana](AENDERUNG-GRAFANA-HTTPS-2026-11-15.md)
+wurde anschließend wieder gestartet und über Caddy angebunden; bestehender
+Admin-Login und zwei Dashboards wurden geprüft. Auch die
+[Grafana-Tunnelroute](AENDERUNG-GRAFANA-TUNNEL-2026-11-15.md) zeigt inzwischen
+mit TLS-Prüfung auf Caddy; Mobilfunkabnahme steht noch aus. Die neue
+[Authentik-Basis](AENDERUNG-AUTHENTIK-BASIS-2026-11-15.md) läuft als VM 132
+unter `.10.19`; `login.jaylab.org` führt lokal über Caddy. Anmeldung von `jay`
+bestätigt, TOTP eingerichtet. Native Datenbank- und vollständige isolierte
+VM-Wiederherstellung sind geprüft. Der [Grafana-SSO-Pilot](AENDERUNG-GRAFANA-SSO-2026-11-15.md)
+ist inzwischen aktiviert; sein Browser-Anmeldetest steht noch aus.
+Die ursprünglichen Entscheidungen bleiben erhalten.
+
 ## Verbindliche Grundlage
 
 1. Repository-Regeln in `AGENTS.md` und die passenden Jaylab-Skills lesen.
@@ -20,15 +36,16 @@ und die vor der Umsetzung noch zu prüfenden Voraussetzungen fest.
 - **Caddy:** eigener Debian-LXC, `unprivileged: 1`, nativ als systemd-Dienst,
   ohne Docker. Startwerte 1 CPU-Kern, 1 GiB RAM, 8 GiB verwaltetes Root-Dateisystem.
   Cloudflare-DNS-Modul über den versionierten Build-/Aktualisierungsweg erhalten.
-- **Authentik:** bislang nicht installiert. Vollständige Neuinstallation
-  mit Server, Worker und PostgreSQL gemeinsam in einer eigenen Linux-VM,
-  offizielle versionierte Compose-Konfiguration. Startwerte 2 vCPU, 4 GiB RAM
-  und etwa 32 GiB virtuelle Platte. Zunächst eingebetteter Outpost.
+- **Authentik:** als vollständige Neuinstallation in VM 132 umgesetzt,
+  Server und Worker 2026.8.5 mit PostgreSQL 16.16. Eigene Linux-VM,
+  versionierte Compose-Konfiguration mit Image-Digests, 2 vCPU, 4 GiB RAM
+  und 32 GiB virtuelle Platte. Eingebetteter Outpost, kein Docker-Socket.
 - **DNS:** vorhandenen dnsmasq-LXC weiterverwenden; keinen neuen Unbound-Gast
   installieren. Für den Pilotnamen `address` und `local` zusammen prüfen,
   damit AAAA-/HTTPS-Abfragen keinen öffentlichen Nebenpfad ergeben.
 - **Platzierung:** `proxmox` oder `proxmox3` nach aktueller Bestandsprüfung,
-  nicht der Routerhost `proxmox2`. IDs und LAN-Adressen noch nicht vergeben.
+  nicht der Routerhost `proxmox2`. Caddy ist inzwischen CT 131 auf `proxmox`,
+  `.10.18`; Authentik ist VM 132 auf demselben Host, `.10.19`.
   Lokalen Gastspeicher mit gesonderter Sicherung vorsehen; iSCSI-Meldungen
   erst gesondert untersuchen.
 - **Netz:** physische Trennung ohne VLANs beibehalten. Feste öffentliche IPv4
@@ -45,16 +62,18 @@ und die vor der Umsetzung noch zu prüfenden Voraussetzungen fest.
   Hostschlüsselbindungen unter `.local/access/known_hosts`. Zugang und Rechte
   neu prüfen; private Schlüssel an ihrem bisherigen Ort belassen.
   Vorgehen: [Zugangseinrichtung](ZUGANGSEINRICHTUNG.md).
-- Einen passenden Cloudflare-DNS-API-Zugang mit `Zone:Read` und `DNS:Edit`
-  für `jaylab.org` nachweisen. Der vorhandene Tunnel-Token ist kein Ersatz.
-  Geheimnisse nicht in Chat, Git oder Prozeßargumenten ablegen.
+- Cloudflare-DNS-API-Zugang inzwischen eingerichtet: `caddy-dns-jaylab`
+  mit `Zone:Read` und `DNS:Edit` ausschließlich für `jaylab.org`.
+  [Anlage, Prüfung und geschützte Ablage](CLOUDFLARE-CADDY-DNS-ZUGANG.md)
+  sind dokumentiert. Bei der Pilotaktivierung sicher in den neuen Gast
+  übertragen worden. Geheimnisse nicht in Chat, Git oder Prozeßargumenten ablegen.
 - Aktuelle Ressourcen, freie Gast-IDs, LAN-Adressen, Netzpfade und
   Sicherungsziele prüfen. Die bisherigen Ressourcenwerte sind nur eine
   Momentaufnahme. Der Storage-Abfrage zufolge gab es IPv6-iSCSI-Zeitüberschreitungen.
-- Grafana CT 102 war bei der letzten Prüfung gestoppt. Den tatsächlichen
-  Backend-Zustand und seine TLS-Kette vor fachlicher Pilotabnahme prüfen.
-  Für einen vorbereitenden Caddy-Test nur einen gesonderten Testendpunkt ohne
-  Fachdaten verwenden; bestehende produktive Tunnelrouten erhalten.
+- Grafana CT 102 war anfangs gestoppt; inzwischen läuft der Dienst mit
+  erneuertem Backend-Zertifikat und geprüftem Admin-/Dashboardzugang.
+  Autostart ist gesetzt. Der erste SSO-Pilot erhält das vorhandene
+  Viewer-Konto und den lokalen Administrator; automatische Anmeldung bleibt aus.
 - Cloudflared wird per Token fernverwaltet. Die zuletzt geladene Konfiguration
   enthielt auch `proxmox.jaylab.org`; dessen Schutz und spätere gezielte
   Umstellung sind ausdrücklich zu behandeln. Eine Änderung der alten lokalen

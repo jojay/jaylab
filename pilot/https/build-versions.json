@@ -1,0 +1,13 @@
+{
+  "status": "Aktiv auf CT 131; DNS-01 und HTTPS abgenommen",
+  "target": "linux/amd64",
+  "go": "go1.26.11",
+  "goArchiveSha256": "9849f4e04ee35303714e34fbc3ac8ab44ea3e448a95aa182f91e3b9b79c710ec",
+  "xcaddy": "v0.4.7",
+  "caddy": "v2.11.9",
+  "cloudflareModule": "v0.2.4",
+  "cloudflareCommit": "a8737d095ad5a48ca031cea6ab704057dbc2d250",
+  "checkedBinarySha256": "26a940a9aefff9fbdbd49a0c4159f1aa9a7aca6f033b349858274ce71834ac95",
+  "validation": "Build und Modulnachweis, Staging-/Produktions-DNS-01, Windows-/Browser-HTTPS, unprivilegierter LXC, Neustart und isolierter PBS-Restore erfolgreich.",
+  "command": "xcaddy build v2.11.9 --with github.com/caddy-dns/cloudflare@v0.2.4 --output caddy-pilot"
+}

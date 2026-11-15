@@ -1,0 +1,27 @@
+# Vorbereitung, noch nicht aktiviert. Werte aus pilot.env vor Start prüfen.
+{
+	admin 127.0.0.1:2019
+	auto_https disable_redirects
+	persist_config off
+	storage file_system {
+		root {$CADDY_STORAGE}
+	}
+	servers {
+		protocols h1 h2
+	}
+}
+
+https://https-pilot.jaylab.org {
+	bind {$PILOT_IPV4}
+	tls {
+		issuer acme {
+			dir {$ACME_DIRECTORY}
+			dns cloudflare {env.CF_API_TOKEN}
+			resolvers 1.1.1.1 1.0.0.1
+		}
+	}
+	header Cache-Control "no-store"
+	respond "Jaylab HTTPS-Pilot" 200
+}
+
+import /etc/caddy/sites/*.caddy

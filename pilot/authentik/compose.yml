@@ -1,0 +1,56 @@
+name: jaylab-authentik
+services:
+  postgresql:
+    image: docker.io/library/postgres:16-alpine@sha256:81e77a4833487b8132fe4b00bedd39dc3f74b8641e387f19312a48f7de218c2e
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    volumes:
+      - database:/var/lib/postgresql/data
+  server:
+    image: ghcr.io/goauthentik/server:2026.8.5@sha256:602227a86455d6772e3d16b7d852713c4f864f40df5df894abd1285bb53979a5
+    command: server
+    environment: &authentik_environment
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: 'false'
+      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS: '192.168.10.18/32'
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    ports:
+      - 127.0.0.1:9000:9000
+      - 192.168.10.19:9443:9443
+    restart: unless-stopped
+    shm_size: 512mb
+    volumes:
+      - ./data:/data
+      - ./custom-templates:/templates
+  worker:
+    image: ghcr.io/goauthentik/server:2026.8.5@sha256:602227a86455d6772e3d16b7d852713c4f864f40df5df894abd1285bb53979a5
+    command: worker
+    environment: *authentik_environment
+    env_file: [.bootstrap.env]
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    restart: unless-stopped
+    shm_size: 512mb
+    user: root
+    volumes:
+      - ./data:/data
+      - ./certs:/certs
+      - ./custom-templates:/templates
+volumes:
+  database:
