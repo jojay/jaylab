@@ -6,7 +6,7 @@ Die Container sind administrativ über `pct exec` zugänglich.
 
 | Dienst | Ort | Aktuelle IPv4 | Nachweis |
 | --- | --- | --- | --- |
-| Node-RED | proxmox, CT 105 | 192.168.40.223 | Neue gültige TLS-Kette; API-GET 200, anonyme/falsche Tokens und Schreiben abgewiesen |
+| Node-RED | proxmox, CT 105 | 192.168.40.223 | Backend- und Frontend-TLS gültig; API-GET 200, anonyme/falsche Tokens und Schreiben abgewiesen; OIDC-Redirect geprüft |
 | MQTT | proxmox3, CT 107 | 192.168.40.213 | Volle TLS-Prüfung und Clientzertifikatsanmeldung erfolgreich; fehlendes Zertifikat/Kennwort abgewiesen |
 | InfluxDB | proxmox3, CT 110 | 192.168.40.218 | v2.8.0, TCP 8086, lokale HTTP-Gesundheitsabfrage erfolgreich |
 | Bosch SHC | physisches Gerät, DHCP-MAC 64:da:a0:10:b1:c9 | 192.168.40.231 | Bestehendes Clientzertifikat funktioniert; Information, Geräte, Räume, Dienste und Szenarien lesbar |
@@ -72,9 +72,10 @@ im Test mit `EHOSTUNREACH`. `getent ahostsv4` liefert korrekt `.231`.
 Der hier gespeicherte Test löst deshalb ausdrücklich den A-Record auf;
 eine bloße Umstellung des laufenden Flows auf den DNS-Namen genügt derzeit nicht.
 
-Die Node-RED-Webanmeldung verwendet OpenID Connect über
-`authentik.jaylab.local`; eine neue Websitzung wurde nicht angemeldet.
-Administrativer Datei- und Prozeßzugriff über den Host ist nachgewiesen.
+Zum Zeitpunkt dieser Prüfung zeigte die Node-RED-Webanmeldung noch auf
+`authentik.jaylab.local`; eine interaktive Sitzung wurde damals nicht
+angemeldet. Administrativer Datei- und Prozeßzugriff über den Host ist
+nachgewiesen.
 
 Die erste Prüfung des damals hinterlegten Webzertifikats
 `/home/jay/.node-red/node-cert.pem` ergab den Aussteller
@@ -90,9 +91,15 @@ Tokens sowie der Schreibversuch werden mit HTTP 401 abgewiesen; der Quellcode
 der installierten Zugriffskontrolle bestätigt diesen Ablehnungsstatus.
 Der Schreibtest verwendete zusätzlich die ungültige API-Version `v99`, die
 selbst bei unerwarteter Berechtigung ein Deployment verhindert. Die Flows
-blieben vor/nach dem Test identisch. OIDC bleibt konfiguriert, sein Dienst
-unter `.226:443` ist derzeit nicht erreichbar; die Browseranmeldung ist damit
-weiterhin offen. Der geprüfte API-Zugang benötigt Authentik nicht.
+blieben vor/nach dem Test identisch. Die frühere OIDC-Konfiguration verwies auf
+`.226:443`; dieser Alias war nicht erreichbar. Inzwischen ist Node-RED mit dem
+Issuer `https://login.jaylab.org/application/o/nodered/` verbunden. Die
+Anwendung ist in Authentik ausschließlich an `jaylab-nodered-users` gebunden,
+deren einziges Mitglied `jay` ist. `nodered.jaylab.org` löst intern auf Caddy
+`.10.18` auf und besitzt ein gültiges Let’s-Encrypt-Zertifikat; öffentlich
+bleiben A, AAAA und HTTPS NXDOMAIN. Der Login-Redirect erreicht Authentik und
+enthält die geprüfte Callback-URI. Eine frische authentisierte Browseranmeldung
+wurde noch nicht bestätigt. Der geprüfte API-Zugang benötigt Authentik nicht.
 
 ## MQTT-Befund und konkrete Korrektur
 

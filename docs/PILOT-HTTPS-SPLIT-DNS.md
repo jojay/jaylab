@@ -37,6 +37,8 @@ Dateien im [Pilotverzeichnis](../pilot/https/):
 
 - [Caddyfile](../pilot/https/Caddyfile): expliziter ACME-Issuer mit DNS-01,
   öffentlicher Challenge-Resolver, fester Testtext, getrennt vorgebbarer Speicher.
+- [Node-RED-Route](../pilot/https/nodered.caddy): internes HTTPS mit DNS-01
+  und geprüftem TLS-Upstream; kein öffentlicher A-/AAAA-Eintrag.
 - [Umgebungsvorlage](../pilot/https/pilot.env.example): zunächst Staging;
   [Produktion](../pilot/https/pilot-production.env.example) mit eigenem
   Verzeichnis. Keine Tokens enthalten.

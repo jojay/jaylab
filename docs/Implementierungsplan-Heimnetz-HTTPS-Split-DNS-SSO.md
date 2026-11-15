@@ -163,16 +163,16 @@ Authentik sind vorerst IPv4-only; ein lokales AAAA-Ziel ist nicht eingerichtet.
 
 ### 4.1 · Authentik-Neuinstallation festlegen
 
-**Betreiberangabe vom 15. November 2026:** Es gibt bislang keine
-Authentik-Installation. Authentik wird vollständig neu installiert; eine
-vorherige Identitätsdatenbank, vorhandene Provider oder deren Migration sind
-keine Voraussetzung dieses Plans.
+**Ausgangslage vor der Bereitstellung am 15. November 2026:** Laut damaliger
+Betreiberangabe gab es keine Authentik-Installation. Authentik wurde danach
+neu bereitgestellt; die Node-RED-Anbindung und ihr offener Abnahmenachweis sind
+im [Änderungsbericht](AENDERUNG-NODERED-HTTPS-SSO-2026-11-15.md) festgehalten.
 
 Der DNS-Alias `authentik.jaylab.local` auf `192.168.40.226` und die in Node-RED
-vorbereitete OIDC-Konfiguration sind Konfigurationsreste, kein Nachweis einer
-Installation. Sie werden bei der Anbindung der jeweiligen Anwendung
-kontrolliert berichtigt. Die gemeinsamen k3s-Aliase dabei nicht pauschal
-löschen. Einzelbelege und die berichtigte Einordnung stehen in der
+vorbereitete OIDC-Konfiguration waren zum Prüfzeitpunkt Konfigurationsreste,
+kein Nachweis einer Installation. Die Node-RED-Konfiguration wurde bei der
+Anbindung auf `login.jaylab.org` berichtigt. Gemeinsame k3s-Aliase wurden nicht
+pauschal gelöscht. Einzelbelege und die berichtigte Einordnung stehen in der
 [Anwendbarkeitsprüfung](PRUEFUNG-HTTPS-SPLIT-DNS-SSO.md).
 
 - [x] Eine eigene Authentik-VM mit neuer PostgreSQL-Datenbank vorsehen.
@@ -183,10 +183,10 @@ löschen. Einzelbelege und die berichtigte Einordnung stehen in der
 - [x] `https://login.jaylab.org` als gemeinsamen Browser- und OIDC-Namen der
   neuen Installation festlegen. Mit lokaler DNS-Sicht und internem Zugang
   beginnen; eine externe Veröffentlichung folgt erst nach Abschnitt 4.5.
-- [ ] Neue Benutzer, Gruppen, Provider und anwendungsspezifische Clients
-  einrichten. Die vorbereiteten Node-RED-Clientwerte nicht als registrierte
-  Identität übernehmen. Keine Wiederherstellung einer vermeintlichen alten
-  Authentik-Installation einplanen.
+- [ ] Weitere Benutzer, Gruppen, Provider und anwendungsspezifische Clients
+  einrichten. Für Node-RED ist der eigene Provider inzwischen registriert;
+  dessen Login- und Gruppenabnahme bleibt offen. Keine Wiederherstellung einer
+  vermeintlichen alten Authentik-Installation einplanen.
 
 ### 4.2 · Lokale Basis, TLS und Betrieb vorbereiten
 
@@ -280,14 +280,16 @@ die folgenden anwendungsübergreifenden Punkte bleiben deshalb teilweise offen.
   Einen Pilotknoten zuerst umstellen. Den im Bestand vorhandenen öffentlichen
   Tunnelpfad `proxmox.jaylab.org` ausdrücklich mit dem Ziel „nur intern“
   abgleichen; ein neuer lokaler Name entfernt diesen Nebenpfad nicht.
-- [ ] **Node-RED:** Für die vorbereitete OIDC-Strategie einen neuen Provider
-  registrieren und Issuer, Clientkennung, Secret und gemessene Callback-URI
-  kontrolliert eintragen. Anwendung und Editor nach
-  der [Node-RED-Anmeldedokumentation](https://nodered.org/docs/user-guide/runtime/securing-node-red)
-  getrennt betrachten: `adminAuth` schützt nicht automatisch alle HTTP-In-
-  oder Dashboard-Endpunkte. Den geprüften API-Lesetoken und MQTT-/SHC-
-  Anbindungen beim Pilotwechsel funktionsfähig erhalten; Secrets weder in
-  Browser-URLs noch in Proxyprotokolle übernehmen.
+- [ ] **Node-RED:** HTTPS, Split-DNS und ein neuer OIDC-Provider sind aktiviert;
+  die Gruppenbindung beschränkt die Anwendung auf `jay`. Der Browser erreicht
+  den Authentik-Anmeldefluß mit korrektem Issuer und Callback. Die frische
+  authentisierte Anmeldung, Editor-WebSocket und Abmeldung müssen noch vom
+  Betreiber bestätigt werden. Anwendung und Editor getrennt betrachten:
+  `adminAuth` schützt nicht automatisch HTTP-In- oder Dashboard-Endpunkte.
+  Bei der Aufnahme waren keine `http in`-Nodes vorhanden. Den geprüften
+  API-Lesetoken und MQTT-/SHC-Anbindungen erhalten; Secrets weder in
+  Browser-URLs noch in Proxyprotokolle übernehmen. Siehe
+  [Änderungsbericht](AENDERUNG-NODERED-HTTPS-SSO-2026-11-15.md).
 - [ ] **Zigbee2MQTT und andere Oberflächen ohne native OIDC-Anmeldung:**
   Bei Bedarf einen eigenen Proxy-Provider im Modus Forward auth für genau
   diese Anwendung und einen eingebetteten oder gesonderten Outpost planen.
