@@ -42,7 +42,7 @@ Dateien im [Pilotverzeichnis](../pilot/https/):
   Verzeichnis. Keine Tokens enthalten.
 - [systemd-Unit](../pilot/https/caddy-pilot.service): eigene Unit ohne
   `--environ`, Syntaxprüfung vor Start, Loopback-Verwaltung aus dem Caddyfile.
-- [DNS-Include](../pilot/https/90-jaylab-https-pilot.conf): nur `address` und
+- [DNS-Include](../router/dnsmasq/90-jaylab-https-pilot.conf): nur `address` und
   `local` für den Pilotnamen. Kein Zonen-Wildcard für `jaylab.org`.
 - [Buildstände](../pilot/https/build-versions.json): Go, xcaddy, Caddy und
   Cloudflare-Modul festgelegt. Der normale Paketbuild darf diesen Build

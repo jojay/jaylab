@@ -49,7 +49,10 @@ Authentik-Dienst ist kein Rückweg.
 
 Die neue Authentik-Anwendung und der vertrauliche Provider sind angelegt;
 Clientkennung `jaylab-grafana`, Provider-ID 1. Anwendung zunächst im
-Authentik-Portal verborgen. Keine Selbstregistrierung oder automatische
+Authentik-Portal während der Einrichtung verborgen. Nach der Meldung des
+Betreibers „Keine Anwendungen vorhanden“ wurde `meta_hide: true` als Ursache
+bestätigt und auf `false` gesetzt. Zugriff für `jay` bleibt erlaubt;
+Provider und Gruppenbindung wurden nicht verändert. Keine Selbstregistrierung oder automatische
 Grafana-Benutzeranlage. Der Gruppen-Zugriffstest erlaubt `jay` und verweigert
 ein unberechtigtes Testkonto; dieses ist danach deaktiviert worden.
 
