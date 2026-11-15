@@ -14,7 +14,11 @@ if (-not $IsWindows) { throw 'Dieses Werkzeug benötigt Windows-DPAPI.' }
 if ($PasswordOnly -and $UserName) { throw '-PasswordOnly ohne -UserName verwenden.' }
 $root = Split-Path -Parent $PSScriptRoot
 $inventory = Get-Content -Raw -LiteralPath (Join-Path $root 'inventory/infrastruktur.json') | ConvertFrom-Json
-if ($DeviceId -notin @($inventory.devices.id)) { throw "Unbekanntes Gerät: $DeviceId" }
+# Bereits inventarisierte Anwendungsdienste haben eigene Zugänge neben dem Host.
+$serviceIds = @('nodered', 'mqtt', 'influxdb')
+if ($DeviceId -notin @($inventory.devices.id) -and $DeviceId -notin $serviceIds) {
+    throw "Unbekanntes Gerät oder unbekannter Dienst: $DeviceId"
+}
 $directory = Join-Path $root '.local/access/credentials'
 $file = Join-Path $directory ($DeviceId + '.clixml')
 if ((Test-Path -LiteralPath $file) -and -not $Replace) {
