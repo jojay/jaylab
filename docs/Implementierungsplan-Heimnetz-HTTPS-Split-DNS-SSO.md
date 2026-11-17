@@ -274,6 +274,15 @@ die folgenden anwendungsübergreifenden Punkte bleiben deshalb teilweise offen.
 - [ ] **Proxmox – ergänzende Abnahme:** Gastkonsole, tatsächliche ACL-Wirkung,
   frische lokale `root@pam`-Sitzung und Notzugang bei ausgefallenem Authentik
   prüfen; Abmeldung und Rechteentzug gesondert prüfen.
+- [x] **Synology – HTTPS und Split-DNS:** Am 17. November 2026 den
+  Browserzugang `https://synstation.jaylab.org/` über Caddy aktiviert;
+  Let's-Encrypt-Zertifikat und strenge TLS-Prüfung zum DSM-Backend bestätigt.
+  DNS-Include und Synchronisierung im Repository abgeglichen. Siehe
+  [Änderungsbericht](AENDERUNG-SYNOLOGY-HTTPS-SSO-2026-11-15.md).
+- [ ] **Synology – SSO und Betriebsabnahme:** Authentik-Anbindung des lokalen
+  Kontos `jay`, frische Anmeldung und Abmeldung sowie Backend-Zertifikatserneuerung
+  stehen noch aus. DSM 7.1.1 bietet im vorhandenen OIDC-Dialog keine
+  Kontotyp-Auswahl; Verzeichniszuordnung vor Umstellung klären.
 - [ ] **ERPNext:** Zuerst den bisherigen Login und die bestehenden API-Aufrufe dokumentieren. In der installierten Frappe-Version den benutzerdefinierten Social Login Key und die tatsächlich erzeugte Redirect-URI prüfen. Authentik zunächst parallel mit einem bestehenden Testkonto und dessen E-Mail-Zuordnung erproben. ERPNext-Rollen und API-Zugriff mit demselben Testumfang nachprüfen.
 - [ ] **Proxmox-Cluster ergänzend:** Für alle drei tatsächlich benutzten
   Knotennamen Zertifikatsnamen, Redirect-URIs und Realm-Verhalten erfassen.

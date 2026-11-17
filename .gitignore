@@ -7,3 +7,6 @@
 *.p12
 *.pfx
 __pycache__/
+.playwright-mcp/BSHC-Dashboard-1794770521298.json
+.playwright-mcp/console-2026-11-15T19-17-27-793Z.log
+.playwright-mcp/console-2026-11-17T18-44-46-916Z.log
