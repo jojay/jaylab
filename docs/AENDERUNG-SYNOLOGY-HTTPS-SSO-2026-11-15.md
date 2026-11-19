@@ -141,3 +141,125 @@ Der direkte `.local:5001`-Zugang bleibt wegen der internen CA gesondert zu
 bewerten. Lokale Anmeldung über den neuen Namen beim Betreiber angefragt.
 Workspace-Prüfung, Shell-Syntaxprüfung und `git diff --check` bestanden.
 Vorhandene Änderung an `.gitignore` wurde erhalten.
+
+## Authentik-SSO: Fortsetzung am 17. November 2026
+
+Betreiber meldet beim Synology-SSO-Reiter „Invalid SSO client application“.
+Authentik-Bestand lesend geprüft: Noch kein Synology-Provider und keine
+Synology-Anwendung vorhanden. Gemeinsamer vorhandener Signierschlüssel ist RSA.
+
+Konkreter Kandidat: eigene Anwendung/Provider `synology` / `jaylab-synology`,
+vertraulicher OIDC-Client, strikte Redirect-URI `https://synstation.jaylab.org`,
+Scopes openid/email/profile, Claim preferred_username, Subject aus E-Mail,
+RSA-Signierung und Zugriff ausschließlich für jay über eigene Gruppe.
+Keine DSM-Konten oder Rechte automatisch anlegen. Vor DSM-Aktivierung die
+veraltete Konfiguration aufnehmen; lokale Anmeldung bleibt erhalten. Alten
+Synology-SSO-Client erst bei geprüftem OIDC-Kandidaten deaktivieren, damit der
+Reiter auf den vorgesehenen Anmeldedienst verweist. SSO-Serverpaket erhalten.
+Rückweg: neue OIDC-Verknüpfung deaktivieren und lokal anmelden; Authentik-
+Anwendung zunächst ausblenden bzw. Gruppenbindung sperren. Alte aufgegebene
+Authentik-Installation ist kein funktionierender Rückweg.
+
+Authentik-Kandidat angelegt: Provider 4, Client-ID `jaylab-synology`, Anwendung
+`synology`, eigene Gruppe nur mit jay. Bis zur Abnahme im Portal ausgeblendet.
+Discovery `https://login.jaylab.org/application/o/synology/.well-known/openid-configuration`
+mit gültigem TLS und RS256 geprüft. Clientgeheimnis ausschließlich im geschützten
+Authentik-Verzeichnis und als Windows-DPAPI-Datei in der vorhandenen lokalen
+Zugangsablage gesichert. DSM ist noch nicht auf diesen Client umgestellt.
+Die am 17. November geöffnete Browsersitzung steht bei der Kennworteingabe;
+lokale Anmeldung beim Betreiber angefragt. Kein Kennwort ausgelesen.
+
+Lokale DSM-Anmeldung nach Betreiberbestätigung im Browser nachgewiesen.
+OIDC-Dialog lesend abgeglichen; bisheriger Issuer und Client-ID stammen noch
+aus dem Altbestand. Neue öffentliche OIDC-Werte im Dialog vorbereitet, aber
+noch nicht gespeichert. Der Betreiber muß den neuen Application key einsetzen
+und speichern; Browsersteuerung verlangt für geänderte Authentifizierungsdaten
+eine Benutzerübergabe. Lokaler DPAPI-Kopierhelfer vorbereitet, nicht ausgeführt.
+Keine Kontotyp-Auswahl im DSM-7.1.1-Dialog vorhanden; die tatsächliche Anmeldung
+mit lokalem jay ist deshalb weiterhin ein offener Abnahmepunkt.
+
+Nach Betreiberbestätigung „fertig“ gespeicherte DSM-Konfiguration geprüft:
+Client-ID jaylab-synology, Authentik-Token- und Authorize-Endpunkte sowie
+Redirect-URI korrekt vorhanden. Der alte Synology-SSO-Dienst war weiterhin
+angekreuzt; diesen gezielt abgeschaltet und Apply ausgeführt. Ein frischer
+HTTP-Abruf enthält danach das alte Synology-SSO-Skript nicht mehr. OIDC bleibt
+eingeschaltet; lokale Anmeldung und bestehende LDAP-Konfiguration erhalten.
+Frische InPrivate-Abnahme begonnen, ohne vorhandene Verwaltungssitzung abzumelden.
+
+Berichtigt am 17. November 2026: Die Synology-Anwendung soll nach der
+Authentik-Anbindung eingeblendet werden. Als bevorzugter Benutzername für die
+DSM-Zuordnung gilt `jay` (Claim `preferred_username`). Das Einblenden und die
+manuelle Providerprüfung stehen noch aus; OIDC-Anmeldung und Gruppenbindung sind
+daher weiterhin nicht als abgenommen bestätigt.
+
+## Einblendung und Provider-Abgleich am 18. November 2026
+
+Betreiber vermutet ein Problem in Authentik, da `synstation` nicht als SSO-Anwendung
+im Portal gelistet wird. Zugriff auf die Authentik-API über das lokale Bootstrap-
+Zertifikat `.local/access/authentik/bootstrap.clixml` hergestellt und Bestand geprüft:
+
+1. Anwendung `synology` (`Synology DSM`, PK `98505ada-5b36-4bf5-be13-c51e867d96e9`)
+   war vorhanden und über die Gruppe `jaylab-synology-users` korrekt an `jay`
+   gebunden, besaß jedoch den Status `meta_hide: true`.
+2. Provider 4 (`jaylab-synology`) war auf `sub_mode: user_email` gesetzt und besaß
+   nur eine einzige strikte Redirect-URI `https://synstation.jaylab.org`.
+
+Durchgeführte Korrekturen:
+- Anwendungssichtbarkeit `meta_hide` über API-PATCH auf `false` gesetzt. Die Kachel
+  `Synology DSM` wird für `jay` nun im Authentik-Portal unter `https://login.jaylab.org/`
+  aufgeführt.
+- Provider 4 vorübergehend auf `sub_mode: user_username` umgestellt. Das setzt
+  `sub` auf den Authentik-Benutzernamen, belegt aber keine DSM-Zuordnung über
+  `sub` und ersetzt nicht den von der Anleitung geforderten Claim
+  `preferred_username`. Die spätere Korrektur steht unten.
+- `redirect_uris` um `https://synstation.jaylab.org/` und
+  `https://synstation.jaylab.org/webman/sso/sso_login.cgi` erweitert, um Abbrüche
+  durch abweichende Schrägstriche oder Callback-Pfade von DSM zu verhindern.
+- Der serverseitige Authentik-Richtlinien- und Dashboard-Cache (`app_access_<pk>`)
+  wurde über `POST /api/v3/policies/all/cache_clear/` explizit geleert, da Authentik
+  den Benutzer-Anwendungsbestand für 300 Sekunden zwischenspeichert.
+
+Rückweg: `meta_hide` kann über denselben API-Aufruf wieder auf `true` gesetzt,
+`sub_mode` auf `user_email` und die Redirect-URIs auf den ursprünglichen Einzelwert
+zurückgestellt werden.
+
+## Redirect-URI-Korrektur am 18. November 2026
+
+Auf Betreiberauftrag Provider 4 (`jaylab-synology`) nach der
+[Authentik-Synology-Anleitung](https://integrations.goauthentik.io/infrastructure/synology-dsm/)
+berichtigt. Vorher waren drei strikte Authorization-Redirect-URIs eingetragen:
+`https://synstation.jaylab.org`,
+`https://synstation.jaylab.org/` und
+`https://synstation.jaylab.org/webman/sso/sso_login.cgi`.
+Die beiden zusätzlichen Einträge entfernt; übrig blieb ausschließlich
+`https://synstation.jaylab.org`.
+
+Die Live-Prüfung bestätigt genau diesen einen Eintrag. Client-ID, Client-Typ,
+Grant-Typen, Subject-Modus, Issuer-Modus, Signierschlüssel und Scope-Mappings
+blieben unverändert. Der öffentliche Discovery-Endpunkt wurde danach mit
+gültiger TLS-Prüfung abgerufen; Issuer und RS256-Angabe stimmen. Ein DSM-Login
+wurde in diesem Schritt nicht ausgeführt.
+
+Fachliche Klarstellung zur vorherigen Begründung des Subject-Modus:
+`sub_mode: user_username` setzt den OIDC-Claim `sub`, ersetzt aber nicht
+`preferred_username`. Die Authentik-Anleitung verlangt, daß
+`preferred_username` dem vorhandenen DSM-Benutzernamen entspricht. Das aktive
+Profil-Mapping setzt den Claim auf den Authentik-Benutzernamen; der tatsächlich
+ausgestellte ID-Token wurde hier nicht eingesehen.
+
+Rückweg: Provider 4 per API-PATCH wieder auf die drei zuvor vorhandenen
+strikten Authorization-URIs setzen. Die übrigen Provider-Felder dabei
+unverändert lassen.
+
+## Subject-Modus-Korrektur am 18. November 2026
+
+Auf Betreiberauftrag Provider 4 (`jaylab-synology`) an die
+Authentik-Synology-Anleitung angeglichen: `sub_mode` von `user_username` auf
+`user_email` gesetzt. Die Live-Prüfung bestätigt den neuen Wert. Redirect-URI,
+Client-ID, Client-Typ, Grant-Typen, Issuer-Modus, Signierschlüssel und
+Scope-Mappings blieben unverändert. Der öffentliche Discovery-Endpunkt besteht
+weiterhin die TLS-Prüfung und weist den erwarteten Issuer sowie RS256 aus.
+Ein DSM-Login wurde nicht ausgeführt.
+
+Rückweg: Provider 4 per API-PATCH auf `sub_mode: user_username` setzen; die
+übrigen Provider-Felder unverändert lassen.
