@@ -114,3 +114,26 @@ ist bisher kein Ziel.
 
 Diese Ergänzung ändert Dokumentation und Inventar. Die laufende Netz-, DNS-
 und Tunnelkonfiguration wird damit nicht geändert.
+
+## Nachtrag 21. November 2026: Paperless-Route
+
+Der Cloudflare-API-Rücklesestand vom 19. November 2026 weist für den Tunnel
+`dfderp` Version 49 aus. Die Regel für `paperless.jaylab.org` führt zu
+`https://192.168.10.18:443` (Caddy CT 131); `originServerName` und
+`httpHostHeader` lauten `paperless.jaylab.org`, `noTLSVerify` ist `false`.
+Caddy prüft seinerseits CA und Hostnamen des Backendzertifikats von CT 116.
+Die übrigen Tunneleinträge wurden bei dieser Paperless-Route nicht geändert.
+
+Ein an die Cloudflare-Edge-Adresse gerichteter anonymer Aufruf von
+`paperless.jaylab.org` leitete bei gültigem TLS zu Cloudflare Access um.
+Nach erfolgreicher Access-Anmeldung bestätigte der Betreiber Paperless-
+Anmeldung und Dokumentübersicht. Beim Upgrade auf Paperless 3.5.1 wurde die
+Tunnelroute nicht verändert.
+
+`login.jaylab.org` (Authentik) hat weiterhin keine öffentliche Tunnelroute und
+ist nur intern erreichbar. OIDC über Paperless funktioniert aus dem Heimnetz;
+der Anmeldeweg über Paperless von außerhalb des Heimnetzes ist wegen der nicht
+erreichbaren IdP-Adresse nicht abgenommen.
+
+Einzelheiten zu Upgrade, OIDC und Zertifikaten stehen in
+[Änderung: Paperless-Upgrade, SSO und Zertifikatsverwaltung](AENDERUNG-PAPERLESS-UPGRADE-SSO-2026-11-21.md).

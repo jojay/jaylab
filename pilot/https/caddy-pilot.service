@@ -1,0 +1,28 @@
+[Unit]
+Description=Jaylab HTTPS-Pilot
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+User=caddy
+Group=caddy
+EnvironmentFile=/etc/caddy/pilot.env
+EnvironmentFile=/etc/caddy/cloudflare.env
+ExecStartPre=/usr/local/bin/caddy-pilot validate --config /etc/caddy/Caddyfile --adapter caddyfile
+ExecStart=/usr/local/bin/caddy-pilot run --config /etc/caddy/Caddyfile --adapter caddyfile
+ExecReload=/usr/local/bin/caddy-pilot reload --config /etc/caddy/Caddyfile --adapter caddyfile
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

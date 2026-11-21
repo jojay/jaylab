@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily native Authentik backup before PBS
+
+[Timer]
+OnCalendar=*-*-* 22:50:00 Europe/Berlin
+Persistent=true
+
+[Install]
+WantedBy=timers.target
