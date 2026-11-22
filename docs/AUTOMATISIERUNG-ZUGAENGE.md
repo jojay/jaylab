@@ -45,8 +45,15 @@ Keine Publikation oder Subscription. Der Node-RED-API-Zugang wird gesondert mit
 Das aktive Projekt ist `nodered-managed` unter
 `/home/jay/.node-red/projects/nodered-managed`. Es enthält einen `shc-config`
 mit Zustand `PAIRED`, 38 `shc-device`-Nodes und zwei Szenarien-Nodes.
-Installiert sind `node-red-contrib-bosch-shc` 0.3.30 und
-`bosch-smart-home-bridge` 1.2.2 unter `/home/jay/node_modules/`.
+Seit der Aktualisierung am 22. November 2026
+([Änderungsprotokoll](AENDERUNG-NODERED-UPGRADE-2026-11-22.md)) laufen auf
+CT 105 Node.js `24.22.3` (`/opt/node-v24.22.3`, bereitgestellt über
+`/usr/local/bin/{node,npm,npx}`) und Node-RED `5.0.10`; installiert sind
+`node-red-contrib-bosch-shc` `0.8.39` und `bosch-smart-home-bridge` `1.8.1`
+unter `/home/jay/.node-red/node_modules/`. Das frühere veraltete Duplikat unter
+`/home/jay/node_modules/` wurde aufgelöst; [Test-JaylabShc.js](../scripts/Test-JaylabShc.js)
+und [Test-JaylabAutomation.ps1](../scripts/Test-JaylabAutomation.ps1) nutzen
+entsprechend `/home/jay/.node-red/node_modules/` bzw. `/usr/local/bin/node`.
 
 Die zuvor gespeicherte SHC-Adresse `192.168.40.4` scheiterte mit `EHOSTUNREACH`.
 DNS und DHCP-Lease für die bekannte Geräte-MAC belegen dagegen `.231`.

@@ -4,7 +4,7 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const dns = require('dns').promises;
-const { BoschSmartHomeBridgeBuilder } = require('/home/jay/node_modules/bosch-smart-home-bridge');
+const { BoschSmartHomeBridgeBuilder } = require('/home/jay/.node-red/node_modules/bosch-smart-home-bridge');
 const base = '/home/jay/.node-red';
 
 async function main() {
