@@ -26,11 +26,11 @@ switch ($Service) {
     'influxdb' { $command = 'pct exec 110 -- curl --fail --silent --show-error --max-time 8 http://127.0.0.1:8086/health' }
     'shc' {
         $profile = 'jaylab-proxmox'
-        $command = 'pct exec 105 -- node -'
+        $command = 'pct exec 105 -- /usr/local/bin/node -'
     }
     'mqtt-tls' {
         $profile = 'jaylab-proxmox'
-        $command = 'pct exec 105 -- node -'
+        $command = 'pct exec 105 -- /usr/local/bin/node -'
     }
     'zigbee' {
         $profile = 'jaylab-proxmox'
