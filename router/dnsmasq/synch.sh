@@ -5,16 +5,18 @@ repo=$(cd -- "$here/../.." && pwd)
 config=${DNSMASQ_SSH_CONFIG:-$repo/.local/access/ssh_config_wsl}
 target=${DNSMASQ_SSH_TARGET:-jaylab-dnsmasq}
 if [[ ${1:-} == --help ]]; then
-    echo 'Aufruf: bash router/dnsmasq/synch.sh'
+    echo 'Aufruf: bash router/dnsmasq/synch.sh [--config-only]'
     echo 'Optional: DNSMASQ_SSH_CONFIG und DNSMASQ_SSH_TARGET.'
     echo 'Synchronisiert zehn Dateien mit Sicherung, Syntaxprüfung und Rücknahme.'
     exit 0
 fi
-[[ $# == 0 && $target =~ ^[a-zA-Z0-9_.@-]+$ && $target != -* ]]
+[[ $# -le 1 && ${1:-} =~ ^(|--config-only)$ && $target =~ ^[a-zA-Z0-9_.@-]+$ && $target != -* ]]
+mode=${1:-all}
 [[ -f $config ]] || { echo "SSH-Konfiguration fehlt: $config" >&2; exit 1; }
 files=(hosts dhcphosts.conf dnsmasq.cnames.conf dnsmasq.conf
        90-jaylab-https-pilot.conf 91-jaylab-grafana.conf 92-jaylab-authentik.conf
        93-jaylab-proxmox.conf 94-jaylab-nodered.conf 95-jaylab-synology.conf)
+[[ $mode != --config-only ]] || files=(dnsmasq.conf)
 payload=$(mktemp -d)
 trap 'rm -rf -- "$payload"' EXIT
 sources=()
@@ -28,9 +30,11 @@ stage=$(ssh "${opts[@]}" "$target" 'umask 077; mktemp -d /root/jaylab-dnsmasq-sy
 [[ $stage =~ ^/root/jaylab-dnsmasq-sync\.[a-zA-Z0-9]+$ ]]
 echo "Arbeitsverzeichnis und Sicherung auf dem Ziel: $stage"
 scp "${opts[@]}" "${sources[@]}" "$target:$stage/"
-ssh "${opts[@]}" "$target" "bash -s -- $stage" <<'REMOTE'
+ssh "${opts[@]}" "$target" "bash -s -- $stage $mode" <<'REMOTE'
 set -euo pipefail
 stage=$1
+mode=$2
+[[ $mode == all || $mode == --config-only ]]
 [[ $stage =~ ^/root/jaylab-dnsmasq-sync\.[a-zA-Z0-9]+$ && -d $stage && ! -L $stage ]]
 [[ $(id -u) == 0 ]]
 exec 9>/run/lock/jaylab-dnsmasq-sync.lock
@@ -44,6 +48,10 @@ targets=(/home/hosts /home/dhcphosts.conf /home/dnsmasq.cnames.conf
          /etc/dnsmasq.d/dnsmasq.conf /etc/dnsmasq.d/90-jaylab-https-pilot.conf
          /etc/dnsmasq.d/91-jaylab-grafana.conf /etc/dnsmasq.d/92-jaylab-authentik.conf
          /etc/dnsmasq.d/93-jaylab-proxmox.conf /etc/dnsmasq.d/94-jaylab-nodered.conf /etc/dnsmasq.d/95-jaylab-synology.conf)
+if [[ $mode == --config-only ]]; then
+    files=(dnsmasq.conf)
+    targets=(/etc/dnsmasq.d/dnsmasq.conf)
+fi
 umask 077
 mkdir "$stage/before"
 different=0
@@ -59,7 +67,7 @@ for i in "${!files[@]}"; do
     if ! cmp -s -- "$stage/${files[i]}" "$dst"; then different=1; fi
 done
 if [[ $different == 0 ]]; then
-    echo 'Alle zehn Dateien identisch; kein Neustart.'
+    echo 'Ausgewählte Dateien identisch; kein Neustart.'
     exit 0
 fi
 committed=0

@@ -46,6 +46,10 @@ Dateien. Aus Bash/WSL, unabhängig vom Arbeitsverzeichnis:
 bash router/dnsmasq/synch.sh
 ```
 
+Mit `bash router/dnsmasq/synch.sh --config-only` wird ausschließlich
+`dnsmasq.conf` synchronisiert; die übrigen verwalteten Dateien bleiben
+unberührt. Auch dieser Aufruf prüft die vollständige Zielkonfiguration.
+
 Standardzugang: Repository-Datei `.local/access/ssh_config_wsl`, Profil
 `jaylab-dnsmasq`. Abweichungen lassen sich mit `DNSMASQ_SSH_CONFIG` und
 `DNSMASQ_SSH_TARGET` angeben. Hostschlüsselprüfung und Batchmodus bleiben
