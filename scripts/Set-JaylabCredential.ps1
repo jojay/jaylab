@@ -15,7 +15,7 @@ if ($PasswordOnly -and $UserName) { throw '-PasswordOnly ohne -UserName verwende
 $root = Split-Path -Parent $PSScriptRoot
 $inventory = Get-Content -Raw -LiteralPath (Join-Path $root 'inventory/infrastruktur.json') | ConvertFrom-Json
 # Bereits inventarisierte Anwendungsdienste haben eigene Zugänge neben dem Host.
-$serviceIds = @('nodered', 'mqtt', 'influxdb')
+$serviceIds = @('nodered', 'mqtt', 'influxdb', 'grafana')
 if ($DeviceId -notin @($inventory.devices.id) -and $DeviceId -notin $serviceIds) {
     throw "Unbekanntes Gerät oder unbekannter Dienst: $DeviceId"
 }
