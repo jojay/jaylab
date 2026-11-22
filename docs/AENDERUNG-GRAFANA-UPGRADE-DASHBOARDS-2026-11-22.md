@@ -36,8 +36,8 @@ Dienstbezeichner `grafana`) das Library Panel `Tür und Fenster Status`
 | APT-Quelle Grafana | `packages.grafana.com` + `/etc/apt/trusted.gpg` | `apt.grafana.com` + `/etc/apt/keyrings/grafana.gpg` | `jammy-icinga.list` und altes `trusted.gpg` entfernt |
 | Library Panel `wbQMs6J4k` | v1 (`room`/`topic`-Overrides, `sortBy Time`) | v2 (`deviceId`-Mapping, A–Z-Sortierung) | Grafana Unified Storage / API |
 | `Aqara Batterie Status` (`unEDfmJVk`) | v4 (`palette-classic`, unsortiert) | v5 (feste Hex-Farben, Tabellenlegende A–Z; später auf v6 bestätigt) | Grafana Unified Storage / API |
-| `BSHC-Aqara-Dashboard` (`_ts0ZCT4k`) | v38 (`No data` in Ventil/Gauges/Panel 17) | v39 (alle Panels aktiv, einheitliche Namen/Farben A–Z) | Grafana Unified Storage / API |
-| `BSHC-Dashboard` (`mttazdTnz`) | v14 (rohe `deviceId`-Labels, `List`-Legenden, `Panel Title`, fehlende Farb-/Einheitsangaben) | v15 (kanonische Namen, feste Hex-Farben, A–Z-Tabellenlegenden, saubere Gauges & Panel 17) | Grafana Unified Storage / API |
+| `BSHC-Aqara-Dashboard` (`_ts0ZCT4k`) | v38 (`No data` in Ventil/Gauges/Panel 17) | v40 (alle Panels aktiv, einheitliche Namen/Farben A–Z, Ventil-Gauges `min: 0` & Auto-Schrift) | Grafana Unified Storage / API |
+| `BSHC-Dashboard` (`mttazdTnz`) | v14 (rohe `deviceId`-Labels, `List`-Legenden, `Panel Title`, fehlende Farb-/Einheitsangaben) | v16 (kanonische Namen, feste Hex-Farben, A–Z-Tabellenlegenden, `min: 0` & Auto-Schrift bei Gauges, Panel 17) | Grafana Unified Storage / API |
 
 ## Istzustand und Abhängigkeiten
 
@@ -152,6 +152,17 @@ Für die sechs Tür-/Fensterkontakte (`ShutterContact`) im Library Panel
     analog `_ts0ZCT4k` auf die 12 A–Z-Reihen `<Gerät> – <Meßgröße>` ohne rohe
     `deviceId`-Labels umgestellt.
   - `BSHC-Dashboard-DEV` (`YjZPR_A7k`) blieb vereinbarungsgemäß unverändert.
+- **Nachbesserung Ventil-Gauges (`_ts0ZCT4k` v39 → v40, `mttazdTnz` v15 → v16):**
+  Im Zuge der Prüfung des `Arbeitszimmer-Ventil`-Wertes (`0 %` am SHC bis
+  `18:59:48`, danach `46 %` bei aktivem Heizbedarf) fiel auf, daß bei allen fünf
+  Ventil-Gauges (IDs `4, 5, 6, 7, 8`) in beiden Dashboards nur `max: 100`, aber
+  kein `min: 0` gesetzt war. Da die neuen `|> last()`-Abfragen genau einen
+  Punkt liefern, wählte Grafana diesen Einzelwert automatisch als Skalenanfang
+  und stellte den Balken leer dar. Mittels `fix-valve-gauges.ps1` wurde in
+  beiden Dashboards bei den Ventil-Gauges ID `4–8` explizit `min: 0` ergänzt
+  und bei allen zwölf Gauges (ID `4–15`) die feste Mini-Schriftgröße
+  `valueSize: 8` zugunsten automatischer Skalierung (`options.text = {}`)
+  entfernt.
 - **Lokale Werkzeuge:** [Set-JaylabCredential.ps1](../scripts/Set-JaylabCredential.ps1)
   um `'grafana'` erweitert; Vorher-/Nachher-JSONs und Hilfsskripte unter
   `.local/changes/2026-11-22-grafana/` abgelegt (von Git ausgeschlossen).
@@ -167,8 +178,10 @@ Für die sechs Tür-/Fensterkontakte (`ShutterContact`) im Library Panel
      `proxmox-backupserver:backup/ct/102/2026-11-22T14:45:18Z` (`5392887197` Byte)
   3. **Zwischensicherung nach erstem Dashboard-Lauf:**
      `proxmox-backupserver:backup/ct/102/2026-11-22T14:55:24Z` (`5393011966` Byte)
-  4. **Schluß-Sicherung nach `BSHC-Dashboard`-Nachtrag (`mttazdTnz` v15):**
-     `proxmox-backupserver:backup/ct/102/2026-11-22T17:33:20Z` (`5393313560` Byte)
+  4. **Sicherung nach `BSHC-Dashboard`-Nachtrag (`mttazdTnz` v15):**
+     `proxmox-backupserver:backup/ct/102/2026-11-22T17:33:20Z` (`5393313560` Byte;
+     für die anschließende reine Gauge-Skalenkorrektur auf `mttazdTnz` v16 /
+     `_ts0ZCT4k` v40 liegen die API-Vorabstände lokal gesichert vor)
 - **Dateisicherung außerhalb CT 102 auf `proxmox` sowie lokal:**
   `/root/.local/jaylab/grafana-upgrade-20261122/` (`0700`, Dateien `0600`):
   `grafana.db` (SHA-256 `7ba5ac9add8af33e2a5b185768fb6a28ed74e59d9649e8ad80e21c0819b72581`),
@@ -176,7 +189,8 @@ Für die sechs Tür-/Fensterkontakte (`ShutterContact`) im Library Panel
   `grafana-backend-2026.pem` (`a8b8d14fa6a20cacf7aa097a99958d01974d8094805855340643179ab5ab4583`),
   `/etc/apt/*`-Sicherungen und Original-JSONs (`unEDfmJVk.json`, `_ts0ZCT4k.json`,
   `wbQMs6J4k.json`), sowie lokale API-Vorabstände unter
-  `.local/changes/2026-11-22-grafana/before-api/` (einschließlich `mttazdTnz.json`).
+  `.local/changes/2026-11-22-grafana/before-api/` (einschließlich `mttazdTnz.json`,
+  `mttazdTnz-pre-min0.json`, `_ts0ZCT4k-pre-min0.json`).
 - **Vollständige Rücknahme auf Vor-Upgrade-Stand (auf `jaylab-proxmox`):**
   ```bash
   pct stop 102
@@ -184,7 +198,7 @@ Für die sechs Tür-/Fensterkontakte (`ShutterContact`) im Library Panel
   pct start 102
   ```
 - **Feingranulare Dashboard-Rücknahme:** Über die Grafana-Versionshistorie
-  (`unEDfmJVk` v4, `_ts0ZCT4k` v38, `mttazdTnz` v14) bzw. durch erneutes
+  (`unEDfmJVk` v4, `_ts0ZCT4k` v38/v39, `mttazdTnz` v14/v15) bzw. durch erneutes
   Einspielen der unter `.local/changes/2026-11-22-grafana/before-api/`
   gesicherten Stände über die Grafana-HTTP-API.
 
@@ -197,15 +211,15 @@ Für die sechs Tür-/Fensterkontakte (`ShutterContact`) im Library Panel
 | Windows → Caddy | `https://grafana.jaylab.org/grafana/api/health` | HTTP `200`, `database: "ok"`, `version: "13.3.1"` | Bestanden |
 | Windows → Caddy (Negativtest) | `https://grafana.jaylab.org/grafana/api/search` (anonym) | HTTP `401` | Bestanden (`HTTP_STATUS=401`) |
 | Windows → Caddy | `https://grafana.jaylab.org/grafana/login/generic_oauth` | HTTP `302` auf `login.jaylab.org` mit PKCE (`S256`) | Bestanden |
-| Windows API (3×) + Negativprüfung | `POST /grafana/api/ds/query` auf alle Panels von `unEDfmJVk`, `wbQMs6J4k`, `_ts0ZCT4k`, `mttazdTnz` | Kein `No data`, identische Hex-Farben/Namen/Legenden/Gauges über alle drei Dashboards, keine `hdm:HomeMaticIP:`-/`deviceId`-Felder oder -Labels in `mttazdTnz`, identische A–Z-Folge über 3 Läufe | Bestanden (`wbQMs6J4k` v2, `unEDfmJVk` v6, `_ts0ZCT4k` v39, `mttazdTnz` v15; `mttazdTnz`: `5` Ventil-, `6` HT-OG-DG-, `1` Luftfeuchtigkeit-, `12` Gauge- und `12` Verlaufsserien ohne Roh-IDs; `ALL 3 RUNS IDENTICAL & NON-EMPTY (ZERO RAW DEVICE IDs IN BSHC): PASS`) |
+| Windows API (3×) + Negativprüfung | `POST /grafana/api/ds/query` auf alle Panels von `unEDfmJVk`, `wbQMs6J4k`, `_ts0ZCT4k`, `mttazdTnz` | Kein `No data`, identische Hex-Farben/Namen/Legenden/Gauges (inkl. `min=0`, `max=100`, ohne `valueSize`), keine `hdm:HomeMaticIP:`-/`deviceId`-Felder oder -Labels in `mttazdTnz`, identische A–Z-Folge über 3 Läufe | Bestanden (`wbQMs6J4k` v2, `unEDfmJVk` v6, `_ts0ZCT4k` v40, `mttazdTnz` v16; `ALL 3 RUNS IDENTICAL & NON-EMPTY (ZERO RAW DEVICE IDs IN BSHC): PASS`) |
 | Chrome-Browser (anonym) | `https://grafana.jaylab.org/grafana/d/unEDfmJVk/aqara-batterie-status` | Keine ungeschützte Dashboard-Anzeige; `13.3.1`-Maske & `Jaylab SSO (LAN)` | Bestanden (`Grafana v13.3.1 (da3aa3ff57)` unter `/grafana/login` geladen) |
 | Windows Workspace | `pwsh -NoProfile -File scripts/tests/Test-CredentialStore.ps1`, `scripts/Test-Workspace.ps1` | `0` Fehler | Bestanden |
 
 ## Abschluß
 
 - **Aktivierungsstand:** Produktiv aktiv auf CT 102 (`Ubuntu 24.04.5 LTS`,
-  `Grafana Enterprise 13.3.1`, `wbQMs6J4k` v2, `unEDfmJVk` v6, `_ts0ZCT4k` v39,
-  `mttazdTnz` v15). Alle vier PBS-Sicherungen liegen auf
+  `Grafana Enterprise 13.3.1`, `wbQMs6J4k` v2, `unEDfmJVk` v6, `_ts0ZCT4k` v40,
+  `mttazdTnz` v16). Alle vier PBS-Sicherungen liegen auf
   `proxmox-backupserver`, die Dateisicherung auf `proxmox` unter
   `/root/.local/jaylab/grafana-upgrade-20261122/` bzw. lokal unter
   `.local/changes/2026-11-22-grafana/`.
