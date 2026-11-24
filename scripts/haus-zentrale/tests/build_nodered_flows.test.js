@@ -685,6 +685,11 @@ test('validatePatchedFlows rejects unsafe poll injects, duplicate ShutterContact
   const badFunc = structuredClone(base);
   badFunc.find((n) => n.id === 'hz_climate_fn').func = 'const x = (;';
   assert.equal(validatePatchedFlows(badFunc, devicesCatalog).ok, false);
+
+  // 9. poll: true on deviceHealth all-devices / all-services nodes must be rejected
+  const badHealthPoll = structuredClone(base);
+  badHealthPoll.find((n) => n.id === 'hz_health_shc_devices').poll = true;
+  assert.equal(validatePatchedFlows(badHealthPoll, devicesCatalog).ok, false);
 });
 
 test('all generated Function-Node func strings compile cleanly in vm.Script and execute end-to-end with mock msg/flow', () => {
@@ -881,6 +886,122 @@ test('all generated Function-Node func strings compile cleanly in vm.Script and 
   assert.deepEqual(garagePt.fields, { state: 'UNAVAILABLE', isOpen: 0, available: 0 });
   const werkstattPt = contactsOut.payload.find((p) => p.tags.deviceName === 'Werkstattfenster');
   assert.deepEqual(werkstattPt.fields, { state: 'OPEN', isOpen: 1, available: 1 });
+});
+
+test('hz_health_fn rejects premature startup emit before non-empty servicesSnapshot and preserves full snapshot on single-device Long-Poll updates', () => {
+  const patched = patchFlows(createOriginalFlowsFixture('test-org'), devicesCatalog, logicSource);
+  const devNode = patched.find((n) => n.id === 'hz_health_shc_devices');
+  const svcNode = patched.find((n) => n.id === 'hz_health_shc_services');
+  assert.equal(devNode.poll, false);
+  assert.equal(svcNode.poll, false);
+
+  const secHealthFlow = createFlowMock();
+  const healthFn = runNodeRedFunc(patched.find((n) => n.id === 'hz_health_fn').func, {}, secHealthFlow, 1700000012000);
+  const contactsFn = runNodeRedFunc(patched.find((n) => n.id === 'hz_contacts_fn').func, {}, secHealthFlow, 1700000015000);
+
+  const DOOR_ID = 'hdm:HomeMaticIP:3014F711A000009D585A1652';
+  const GARAGE_ID = 'hdm:HomeMaticIP:3014F711A000009D585A1636';
+  const WERKSTATT_ID = 'hdm:HomeMaticIP:3014F711A000009398584454';
+  const SPRINGER_ID = 'hdm:HomeMaticIP:3014F711A00004953859DEF1';
+  const CAM_ID = devicesCatalog.systemDevices.camera3yes.deviceId;
+
+  const all38 = [
+    ...devicesCatalog.climateSensors
+      .filter((s) => devicesCatalog.physicalShcModels.includes(s.model))
+      .map((s) => ({ '@type': 'device', id: s.deviceId, name: s.shcName, deviceModel: s.model, status: 'AVAILABLE', roomId: 'hz_raw' })),
+    ...devicesCatalog.contacts.map((c) => ({
+      '@type': 'device',
+      id: c.deviceId,
+      name: c.shcName,
+      deviceModel: 'SWD',
+      status: c.deviceId === DOOR_ID ? 'UNAVAILABLE' : c.deviceId === GARAGE_ID ? 'UNDEFINED' : 'AVAILABLE',
+      roomId: 'hz_raw',
+    })),
+    ...devicesCatalog.smartPlugs.map((p) => ({
+      '@type': 'device',
+      id: p.deviceId,
+      name: p.shcName,
+      deviceModel: p.model,
+      status: p.deviceId === SPRINGER_ID ? 'UNDEFINED' : 'AVAILABLE',
+      roomId: 'hz_raw',
+    })),
+    {
+      '@type': 'device',
+      id: CAM_ID,
+      name: devicesCatalog.systemDevices.camera3yes.shcName,
+      deviceModel: devicesCatalog.systemDevices.camera3yes.model,
+      status: 'UNAVAILABLE',
+      roomId: 'hz_raw',
+    },
+    ...devicesCatalog.roomClimateControls.map((r) => ({
+      '@type': 'device',
+      id: r.deviceId,
+      name: '-RoomClimateControl-',
+      deviceModel: 'ROOM_CLIMATE_CONTROL',
+      status: 'AVAILABLE',
+    })),
+    { '@type': 'device', id: 'ventilationService', name: '-VentilationService-', deviceModel: 'VENTILATION_SERVICE', status: 'AVAILABLE' },
+    { '@type': 'device', id: 'intrusionDetectionSystem', name: '-IntrusionDetectionSystem-', deviceModel: 'INTRUSION_DETECTION_SYSTEM', status: 'AVAILABLE' },
+    { '@type': 'device', id: 'presenceSimulationService', name: '-PresenceSimulationService-', deviceModel: 'PRESENCE_SIMULATION_SERVICE', status: 'AVAILABLE' },
+    { '@type': 'device', id: 'hueBridgeManager', name: '-HueBridgeManager-', deviceModel: 'HUE_BRIDGE_MANAGER', status: 'AVAILABLE' },
+  ];
+  assert.equal(all38.length, 38);
+
+  // (b) Startup devices snapshot before services must emit null (never faultCount: 0), even if an empty services array arrives first
+  assert.equal(healthFn.invoke({ payload: all38 }, 1700000012000), null);
+  assert.equal(healthFn.invoke({ topic: 'all', payload: [] }, 1700000012010), null);
+
+  // Once non-empty services snapshot arrives, all 25 devices emit with real faultCount
+  const initialOut = healthFn.invoke({
+    topic: 'all',
+    payload: [
+      { '@type': 'DeviceServiceData', id: 'CameraNotification', deviceId: CAM_ID, faults: { entries: [{ type: 'COMMUNICATION_ERROR' }] } },
+    ],
+  }, 1700000012050);
+  assert.ok(initialOut);
+  assert.equal(initialOut.payload.length, 25);
+  assert.equal(initialOut.payload.find((p) => p.tags.deviceId === CAM_ID).fields.faultCount, 1);
+
+  // (a) Single-device Long-Poll as plain object AND as 1-element array must merge incrementally without wiping the 38-device snapshot or hzDeviceStatusById
+  const singleObjOut = healthFn.invoke({
+    payload: { '@type': 'device', id: GARAGE_ID, name: 'Garagentor', deviceModel: 'SWD', status: 'AVAILABLE' },
+  }, 1700000020000);
+  assert.ok(singleObjOut);
+  assert.equal(singleObjOut.payload.length, 25, 'Plain single-device Long-Poll must keep all 25 physical devices');
+  assert.equal(secHealthFlow.get('hzDevicesSnapshot').length, 38);
+
+  const singleArrayOut = healthFn.invoke({
+    payload: [{ '@type': 'device', id: DOOR_ID, name: 'Tür Hauseingang', deviceModel: 'SWD', status: 'AVAILABLE' }],
+  }, 1700000025000);
+  assert.ok(singleArrayOut);
+  assert.equal(singleArrayOut.payload.length, 25, '1-element device array Long-Poll must NOT wipe hzDevicesSnapshot');
+  assert.equal(secHealthFlow.get('hzDevicesSnapshot').length, 38);
+
+  const statusMap = secHealthFlow.get('hzDeviceStatusById');
+  assert.equal(statusMap[GARAGE_ID], 'AVAILABLE');
+  assert.equal(statusMap[DOOR_ID], 'AVAILABLE');
+  assert.equal(statusMap[WERKSTATT_ID], 'AVAILABLE');
+  assert.equal(statusMap[SPRINGER_ID], 'UNDEFINED');
+  assert.equal(statusMap[CAM_ID], 'UNAVAILABLE');
+
+  // Verify hz_contacts_fn still sees accurate statuses for other contacts after 1-element Long-Poll
+  const contactsOut = contactsFn.invoke({
+    payload: [
+      { id: 'ShutterContact', deviceId: WERKSTATT_ID, state: { value: 'CLOSED' } },
+      { id: 'ShutterContact', deviceId: DOOR_ID, state: { value: 'OPEN' } },
+    ],
+  }, 1700000026000);
+  assert.ok(contactsOut);
+  assert.deepEqual(contactsOut.payload.find((p) => p.tags.deviceId === WERKSTATT_ID).fields, {
+    state: 'CLOSED',
+    isOpen: 0,
+    available: 1,
+  });
+  assert.deepEqual(contactsOut.payload.find((p) => p.tags.deviceId === DOOR_ID).fields, {
+    state: 'OPEN',
+    isOpen: 1,
+    available: 1,
+  });
 });
 
 test('CLI builds validated flows file and exits non-zero on invalid input', () => {

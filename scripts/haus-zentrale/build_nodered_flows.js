@@ -505,6 +505,9 @@ return msg;
 const nowMs = Date.now();
 const rawPayload = msg && msg.payload;
 const items = normalizePayload(rawPayload);
+if (items.length === 0) {
+  return null;
+}
 
 let devicesSnapshot = flow.get('hzDevicesSnapshot');
 let servicesSnapshot = flow.get('hzServicesSnapshot');
@@ -513,74 +516,79 @@ if (!deviceStatusById || typeof deviceStatusById !== 'object' || Array.isArray(d
   deviceStatusById = {};
 }
 
-if (items.length === 0) {
-  if (Array.isArray(rawPayload) && msg && (msg.topic === 'all' || msg.topic === 'Alle SHC-Dienste (getDeviceServices)')) {
-    servicesSnapshot = [];
-    flow.set('hzServicesSnapshot', servicesSnapshot);
-  } else {
-    return null;
-  }
-} else {
-  const first = items[0];
-  const looksLikeDevices =
-    first['@type'] === 'device' ||
-    (typeof first.deviceModel === 'string' && !Object.prototype.hasOwnProperty.call(first, 'deviceId'));
-  const looksLikeServices =
-    first['@type'] === 'DeviceServiceData' ||
-    (typeof first.deviceId === 'string' && typeof first.id === 'string');
+const first = items[0];
+const looksLikeDevices =
+  first['@type'] === 'device' ||
+  (typeof first.deviceModel === 'string' && !Object.prototype.hasOwnProperty.call(first, 'deviceId'));
+const looksLikeServices =
+  first['@type'] === 'DeviceServiceData' ||
+  (typeof first.deviceId === 'string' && typeof first.id === 'string');
 
-  if (looksLikeDevices) {
-    if (Array.isArray(rawPayload)) {
-      devicesSnapshot = items;
-    } else {
-      const byId = new Map();
-      if (Array.isArray(devicesSnapshot)) {
-        for (const d of devicesSnapshot) {
-          if (d && typeof d.id === 'string') {
-            byId.set(d.id, d);
-          }
-        }
-      }
-      for (const d of items) {
+if (looksLikeDevices) {
+  const isIncrementalDeviceUpdate =
+    !Array.isArray(rawPayload) ||
+    (Array.isArray(devicesSnapshot) && devicesSnapshot.length > 1 && items.length === 1);
+
+  if (!isIncrementalDeviceUpdate) {
+    devicesSnapshot = items;
+    deviceStatusById = {};
+  } else {
+    const byId = new Map();
+    if (Array.isArray(devicesSnapshot)) {
+      for (const d of devicesSnapshot) {
         if (d && typeof d.id === 'string') {
           byId.set(d.id, d);
         }
       }
-      devicesSnapshot = Array.from(byId.values());
     }
     for (const d of items) {
-      if (d && typeof d.id === 'string' && typeof d.status === 'string') {
-        deviceStatusById[d.id] = d.status;
+      if (d && typeof d.id === 'string') {
+        byId.set(d.id, d);
       }
     }
-    flow.set('hzDevicesSnapshot', devicesSnapshot);
-    flow.set('hzDeviceStatusById', deviceStatusById);
-  } else if (looksLikeServices) {
-    if (Array.isArray(rawPayload)) {
-      servicesSnapshot = items;
-    } else {
-      const byKey = new Map();
-      if (Array.isArray(servicesSnapshot)) {
-        for (const s of servicesSnapshot) {
-          if (s && typeof s.deviceId === 'string' && typeof s.id === 'string') {
-            byKey.set(s.deviceId + '|' + s.id, s);
-          }
-        }
-      }
-      for (const s of items) {
+    devicesSnapshot = Array.from(byId.values());
+  }
+  for (const d of items) {
+    if (d && typeof d.id === 'string' && typeof d.status === 'string') {
+      deviceStatusById[d.id] = d.status;
+    }
+  }
+  flow.set('hzDevicesSnapshot', devicesSnapshot);
+  flow.set('hzDeviceStatusById', deviceStatusById);
+} else if (looksLikeServices) {
+  const isIncrementalServiceUpdate =
+    !Array.isArray(rawPayload) ||
+    (Array.isArray(servicesSnapshot) && servicesSnapshot.length > 1 && items.length === 1);
+
+  if (!isIncrementalServiceUpdate) {
+    servicesSnapshot = items;
+  } else {
+    const byKey = new Map();
+    if (Array.isArray(servicesSnapshot)) {
+      for (const s of servicesSnapshot) {
         if (s && typeof s.deviceId === 'string' && typeof s.id === 'string') {
           byKey.set(s.deviceId + '|' + s.id, s);
         }
       }
-      servicesSnapshot = Array.from(byKey.values());
     }
-    flow.set('hzServicesSnapshot', servicesSnapshot);
-  } else {
-    return null;
+    for (const s of items) {
+      if (s && typeof s.deviceId === 'string' && typeof s.id === 'string') {
+        byKey.set(s.deviceId + '|' + s.id, s);
+      }
+    }
+    servicesSnapshot = Array.from(byKey.values());
   }
+  flow.set('hzServicesSnapshot', servicesSnapshot);
+} else {
+  return null;
 }
 
-if (!Array.isArray(devicesSnapshot) || !Array.isArray(servicesSnapshot)) {
+if (
+  !Array.isArray(devicesSnapshot) ||
+  devicesSnapshot.length === 0 ||
+  !Array.isArray(servicesSnapshot) ||
+  servicesSnapshot.length === 0
+) {
   return null;
 }
 
@@ -1077,13 +1085,19 @@ function validatePatchedFlows(flows, devicesConfig) {
     }
   }
 
-  // Startup-Reihenfolge getDevice (onceDelay 12) vor ShutterContact (onceDelay 15)
+  // Startup-Reihenfolge getDevice (onceDelay 12) vor ShutterContact (onceDelay 15) & kein Long-Poll auf deviceHealth-Sammel-Nodes
   const healthInject = byId.get('hz_health_inject');
   const contactsInject = byId.get('hz_contacts_inject');
   if (!healthInject || !contactsInject) {
     errors.push('Fehlende Inject-Nodes für Gerätegesundheit oder Kontakte.');
   } else if (!(Number(healthInject.onceDelay) < Number(contactsInject.onceDelay))) {
     errors.push('hz_health_inject.onceDelay muß strikt vor hz_contacts_inject.onceDelay liegen.');
+  }
+  for (const healthShcId of ['hz_health_shc_devices', 'hz_health_shc_services']) {
+    const healthShc = byId.get(healthShcId);
+    if (!healthShc || healthShc.poll !== false) {
+      errors.push(`Gerätegesundheits-Node ${healthShcId} muß poll=false setzen.`);
+    }
   }
 
   // Alle 9 Kontakte in hz_contacts_fn, 4 Steckdosen in hz_plugs_fn, 9 RCCs in hz_climate_fn
