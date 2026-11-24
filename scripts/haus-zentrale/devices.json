@@ -1,0 +1,537 @@
+{
+  "climateSensors": [
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000005D585C78C6",
+      "bucket": "shcbucket",
+      "canonicalName": "Arbeitszimmer",
+      "shcName": "HT-Arbeitszimmer",
+      "room": "E2 Arbeitszimmer",
+      "model": "TRV",
+      "color": "#73BF69",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000005D58597571",
+      "bucket": "shcbucket",
+      "canonicalName": "Badezimmer (SHC)",
+      "shcName": "HT-Badezimmer",
+      "room": "E3 Badezimmer",
+      "model": "TRV",
+      "color": "#F2495C",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000005BB85F9F08",
+      "bucket": "shcbucket",
+      "canonicalName": "Esseck",
+      "shcName": "HT-Esseck",
+      "room": "E2 Wohn-/Eßzimmer",
+      "model": "TRV",
+      "color": "#B877D9",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000289BB85F32B0",
+      "bucket": "shcbucket",
+      "canonicalName": "Raumthermostat",
+      "shcName": "Raumthermostat",
+      "room": "E2 Wohn-/Eßzimmer",
+      "model": "THB",
+      "color": "#3274D9",
+      "hasValve": false,
+      "hasHumidity": true
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000005D585C79B6",
+      "bucket": "shcbucket",
+      "canonicalName": "Umkleidezimmer OG",
+      "shcName": "HT-Umkleidezimmer",
+      "room": "E2 Umkleideraum",
+      "model": "TRV",
+      "color": "#FADE2A",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000005BB85F9E0D",
+      "bucket": "shcbucket",
+      "canonicalName": "Wohnzimmer",
+      "shcName": "HT-Wohnzimmer",
+      "room": "E2 Wohn-/Eßzimmer",
+      "model": "TRV",
+      "color": "#5794F2",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000005398584A0F",
+      "bucket": "shcbucket",
+      "canonicalName": "Vincent (SHC)",
+      "shcName": "HT-Vincent",
+      "room": "Vincent",
+      "model": "TRV",
+      "color": "#FF9830",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000005398584BCF",
+      "bucket": "shcbucket",
+      "canonicalName": "Samuel (SHC)",
+      "shcName": "HT-Samuel",
+      "room": "Samuel",
+      "model": "TRV",
+      "color": "#E07A5F",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A0000053985B4092",
+      "bucket": "shcbucket",
+      "canonicalName": "Lea Arbeitszimmer",
+      "shcName": "HT-Lea-Arbeitszimmer",
+      "room": "Lea Arbeitszimmer",
+      "model": "TRV",
+      "color": "#1F78C1",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000005D5859748B",
+      "bucket": "shcbucket",
+      "canonicalName": "Schlafzimmer Eltern (SHC)",
+      "shcName": "HT-EG-Schlafzimmer",
+      "room": "E1 Schlafzimmer Eltern",
+      "model": "TRV",
+      "color": "#A352CC",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A0000053985846BB",
+      "bucket": "shcbucket",
+      "canonicalName": "Ankleidezimmer",
+      "shcName": "HT-Ankleidezimmer",
+      "room": "E3 Ankleidezimmer",
+      "model": "TRV",
+      "color": "#8AB8FF",
+      "hasValve": true,
+      "hasHumidity": false
+    },
+    {
+      "deviceId": "zigbee2mqtt/0x00158d00091adbe3",
+      "bucket": "zigbee2mqtt",
+      "canonicalName": "Badezimmer (Aqara)",
+      "shcName": "aquara-SZ-Badezimmer",
+      "room": "E3 Badezimmer",
+      "model": "lumi.weather",
+      "color": "#C0D8FF",
+      "hasValve": false,
+      "hasHumidity": true
+    },
+    {
+      "deviceId": "zigbee2mqtt/0x00158d00091c96be",
+      "bucket": "zigbee2mqtt",
+      "canonicalName": "Küche (Aqara)",
+      "shcName": "aquara-SZ-Kueche",
+      "room": "E2 Küche",
+      "model": "lumi.weather",
+      "color": "#9FDD12",
+      "hasValve": false,
+      "hasHumidity": true
+    },
+    {
+      "deviceId": "zigbee2mqtt/0x00158d00091adb08",
+      "bucket": "zigbee2mqtt",
+      "canonicalName": "Schlafzimmer Eltern",
+      "shcName": "aquara-SZ-Eltern",
+      "room": "E1 Schlafzimmer Eltern",
+      "model": "lumi.weather",
+      "color": "#CA95E5",
+      "hasValve": false,
+      "hasHumidity": true
+    },
+    {
+      "deviceId": "zigbee2mqtt/0x00158d00091a463f",
+      "bucket": "zigbee2mqtt",
+      "canonicalName": "Schlafzimmer Samuel",
+      "shcName": "aquara-SZ-Samuel",
+      "room": "Samuel",
+      "model": "lumi.weather",
+      "color": "#EAB839",
+      "hasValve": false,
+      "hasHumidity": true
+    },
+    {
+      "deviceId": "zigbee2mqtt/0x00158d00091a459e",
+      "bucket": "zigbee2mqtt",
+      "canonicalName": "Schlafzimmer Vincent",
+      "shcName": "aquara-SZ-Vincent",
+      "room": "Vincent",
+      "model": "lumi.weather",
+      "color": "#37872D",
+      "hasValve": false,
+      "hasHumidity": true
+    },
+    {
+      "deviceId": "zigbee2mqtt/0x00158d00091a4176",
+      "bucket": "zigbee2mqtt",
+      "canonicalName": "Tiefkeller",
+      "shcName": "aquara-SZ-Tiefkeller",
+      "room": "Keller / Tiefkeller",
+      "model": "lumi.weather",
+      "color": "#0BD7CD",
+      "hasValve": false,
+      "hasHumidity": true
+    }
+  ],
+  "roomClimateControls": [
+    {
+      "deviceId": "roomClimateControl_hz_2",
+      "shcRoom": "E3:Badezimmer",
+      "matrixRoom": "E3 Badezimmer"
+    },
+    {
+      "deviceId": "roomClimateControl_hz_9",
+      "shcRoom": "E3:Ankleidezimmer",
+      "matrixRoom": "E3 Ankleidezimmer"
+    },
+    {
+      "deviceId": "roomClimateControl_hz_1",
+      "shcRoom": "E2:Wohn/Esszimmer",
+      "matrixRoom": "E2 Wohn-/Eßzimmer"
+    },
+    {
+      "deviceId": "roomClimateControl_hz_7",
+      "shcRoom": "E2:Arbeitszimmer",
+      "matrixRoom": "E2 Arbeitszimmer"
+    },
+    {
+      "deviceId": "roomClimateControl_hz_8",
+      "shcRoom": "E2:Umkleideraum",
+      "matrixRoom": "E2 Umkleideraum"
+    },
+    {
+      "deviceId": "roomClimateControl_hz_3",
+      "shcRoom": "E1:Schlaf",
+      "matrixRoom": "E1 Schlafzimmer Eltern"
+    },
+    {
+      "deviceId": "roomClimateControl_hz_15",
+      "shcRoom": "Lea Arbeitszimmer ",
+      "matrixRoom": "Lea Arbeitszimmer"
+    },
+    {
+      "deviceId": "roomClimateControl_hz_13",
+      "shcRoom": "Samuel",
+      "matrixRoom": "Samuel"
+    },
+    {
+      "deviceId": "roomClimateControl_hz_12",
+      "shcRoom": "Vincent",
+      "matrixRoom": "Vincent"
+    }
+  ],
+  "contacts": [
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009D585A160F",
+      "shcName": "Fenster-Arbeitszimmer",
+      "canonicalName": "Fenster Arbeitszimmer",
+      "shcRoom": "E2:Arbeitszimmer",
+      "matrixRoom": "E2 Arbeitszimmer",
+      "legacyShutterContact": true
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009D585A25E5",
+      "shcName": "Fenster-Bad",
+      "canonicalName": "Fenster Bad",
+      "shcRoom": "E3:Badezimmer",
+      "matrixRoom": "E3 Badezimmer",
+      "legacyShutterContact": true
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009D585A191E",
+      "shcName": "Fenster-EG-Schlafzimmer",
+      "canonicalName": "Fenster EG Schlafzimmer",
+      "shcRoom": "E1:Schlaf",
+      "matrixRoom": "E1 Schlafzimmer Eltern",
+      "legacyShutterContact": true
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009D5858CD31",
+      "shcName": "Fenster-Esszimmer",
+      "canonicalName": "Fenster Esszimmer",
+      "shcRoom": "E2:Wohn/Esszimmer",
+      "matrixRoom": "E2 Wohn-/Eßzimmer",
+      "legacyShutterContact": true
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009D585A1636",
+      "shcName": "Garagentor",
+      "canonicalName": "Garagentor",
+      "shcRoom": "E0:Wagenhalle",
+      "matrixRoom": null,
+      "legacyShutterContact": true
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009D585A1652",
+      "shcName": "Tür Hauseingang",
+      "canonicalName": "Tür Hauseingang",
+      "shcRoom": "E0:Haus-Foyer",
+      "matrixRoom": null,
+      "legacyShutterContact": true
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009398584454",
+      "shcName": "Werkstattfenster",
+      "canonicalName": "Werkstattfenster",
+      "shcRoom": "Keller",
+      "matrixRoom": "Keller / Tiefkeller",
+      "legacyShutterContact": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009398584465",
+      "shcName": "Fenster-Samuel",
+      "canonicalName": "Fenster Samuel",
+      "shcRoom": "Samuel",
+      "matrixRoom": "Samuel",
+      "legacyShutterContact": false
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A000009A185930F2",
+      "shcName": "Fenster-Vincent",
+      "canonicalName": "Fenster Vincent",
+      "shcRoom": "Vincent",
+      "matrixRoom": "Vincent",
+      "legacyShutterContact": false
+    }
+  ],
+  "smartPlugs": [
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A0000493985923FF",
+      "shcName": "Waschmaschine",
+      "canonicalName": "Waschmaschine",
+      "room": "Waschküche",
+      "model": "PSM",
+      "color": "#5794F2",
+      "applianceConfig": {
+        "startThresholdW": 10,
+        "startHoldSec": 60,
+        "stopThresholdW": 4,
+        "stopHoldSec": 300,
+        "doneAutoResetMin": 240,
+        "runningLabel": "Läuft"
+      }
+    },
+    {
+      "deviceId": "hdm:ZigBee:842712fffebbc43f",
+      "shcName": "Creality",
+      "canonicalName": "Creality",
+      "room": "Keller",
+      "model": "PLUG_COMPACT",
+      "color": "#FF9830",
+      "applianceConfig": {
+        "startThresholdW": 15,
+        "startHoldSec": 60,
+        "stopThresholdW": 8,
+        "stopHoldSec": 300,
+        "doneAutoResetMin": 240,
+        "runningLabel": "Druckt"
+      }
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A0000495385A125B",
+      "shcName": "ZS Kompressor",
+      "canonicalName": "ZS Kompressor",
+      "room": "Keller",
+      "model": "PSM",
+      "color": "#73BF69",
+      "applianceConfig": null
+    },
+    {
+      "deviceId": "hdm:HomeMaticIP:3014F711A00004953859DEF1",
+      "shcName": "Ela-Wandheizung",
+      "canonicalName": "Springer",
+      "room": "E1 Schlafzimmer Eltern",
+      "model": "PSM",
+      "color": "#B877D9",
+      "applianceConfig": null
+    }
+  ],
+  "systemDevices": {
+    "intrusionDetectionSystem": {
+      "deviceId": "intrusionDetectionSystem",
+      "shcName": "-IntrusionDetectionSystem-",
+      "canonicalName": "Alarmsystem",
+      "model": "INTRUSION_DETECTION_SYSTEM",
+      "room": "Haus"
+    },
+    "presenceSimulationService": {
+      "deviceId": "presenceSimulationService",
+      "shcName": "-PresenceSimulationService-",
+      "canonicalName": "Anwesenheitssimulation",
+      "model": "PRESENCE_SIMULATION_SERVICE",
+      "room": "Haus"
+    },
+    "camera3yes": {
+      "deviceId": "hdm:Cameras:a692861d-be1b-3b98-a47b-9f33e83a46fe",
+      "shcName": "3yes",
+      "canonicalName": "Außenkamera 3yes",
+      "model": "CAMERA_EYES",
+      "room": "Außenbereich"
+    }
+  },
+  "physicalShcModels": [
+    "TRV",
+    "THB",
+    "SWD",
+    "PSM",
+    "PLUG_COMPACT",
+    "CAMERA_EYES"
+  ],
+  "matrixRooms": [
+    {
+      "sortOrder": 1,
+      "matrixRoom": "E3 Badezimmer",
+      "primaryTempId": "zigbee2mqtt/0x00158d00091adbe3",
+      "fallbackTempIds": [
+        "hdm:HomeMaticIP:3014F711A000005D58597571"
+      ],
+      "rccId": "roomClimateControl_hz_2",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A000005D58597571"
+      ],
+      "humidityId": "zigbee2mqtt/0x00158d00091adbe3",
+      "contactId": "hdm:HomeMaticIP:3014F711A000009D585A25E5"
+    },
+    {
+      "sortOrder": 2,
+      "matrixRoom": "E3 Ankleidezimmer",
+      "primaryTempId": "hdm:HomeMaticIP:3014F711A0000053985846BB",
+      "fallbackTempIds": [],
+      "rccId": "roomClimateControl_hz_9",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A0000053985846BB"
+      ],
+      "humidityId": null,
+      "contactId": null
+    },
+    {
+      "sortOrder": 3,
+      "matrixRoom": "E2 Wohn-/Eßzimmer",
+      "primaryTempId": "hdm:HomeMaticIP:3014F711A000289BB85F32B0",
+      "fallbackTempIds": [
+        "hdm:HomeMaticIP:3014F711A000005BB85F9E0D",
+        "hdm:HomeMaticIP:3014F711A000005BB85F9F08"
+      ],
+      "rccId": "roomClimateControl_hz_1",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A000005BB85F9E0D",
+        "hdm:HomeMaticIP:3014F711A000005BB85F9F08"
+      ],
+      "humidityId": "hdm:HomeMaticIP:3014F711A000289BB85F32B0",
+      "contactId": "hdm:HomeMaticIP:3014F711A000009D5858CD31"
+    },
+    {
+      "sortOrder": 4,
+      "matrixRoom": "E2 Arbeitszimmer",
+      "primaryTempId": "hdm:HomeMaticIP:3014F711A000005D585C78C6",
+      "fallbackTempIds": [],
+      "rccId": "roomClimateControl_hz_7",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A000005D585C78C6"
+      ],
+      "humidityId": null,
+      "contactId": "hdm:HomeMaticIP:3014F711A000009D585A160F"
+    },
+    {
+      "sortOrder": 5,
+      "matrixRoom": "E2 Umkleideraum",
+      "primaryTempId": "hdm:HomeMaticIP:3014F711A000005D585C79B6",
+      "fallbackTempIds": [],
+      "rccId": "roomClimateControl_hz_8",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A000005D585C79B6"
+      ],
+      "humidityId": null,
+      "contactId": null
+    },
+    {
+      "sortOrder": 6,
+      "matrixRoom": "E2 Küche",
+      "primaryTempId": "zigbee2mqtt/0x00158d00091c96be",
+      "fallbackTempIds": [],
+      "rccId": null,
+      "valveIds": [],
+      "humidityId": "zigbee2mqtt/0x00158d00091c96be",
+      "contactId": null
+    },
+    {
+      "sortOrder": 7,
+      "matrixRoom": "E1 Schlafzimmer Eltern",
+      "primaryTempId": "zigbee2mqtt/0x00158d00091adb08",
+      "fallbackTempIds": [
+        "hdm:HomeMaticIP:3014F711A000005D5859748B"
+      ],
+      "rccId": "roomClimateControl_hz_3",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A000005D5859748B"
+      ],
+      "humidityId": "zigbee2mqtt/0x00158d00091adb08",
+      "contactId": "hdm:HomeMaticIP:3014F711A000009D585A191E"
+    },
+    {
+      "sortOrder": 8,
+      "matrixRoom": "Lea Arbeitszimmer",
+      "primaryTempId": "hdm:HomeMaticIP:3014F711A0000053985B4092",
+      "fallbackTempIds": [],
+      "rccId": "roomClimateControl_hz_15",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A0000053985B4092"
+      ],
+      "humidityId": null,
+      "contactId": null
+    },
+    {
+      "sortOrder": 9,
+      "matrixRoom": "Samuel",
+      "primaryTempId": "zigbee2mqtt/0x00158d00091a463f",
+      "fallbackTempIds": [
+        "hdm:HomeMaticIP:3014F711A000005398584BCF"
+      ],
+      "rccId": "roomClimateControl_hz_13",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A000005398584BCF"
+      ],
+      "humidityId": "zigbee2mqtt/0x00158d00091a463f",
+      "contactId": "hdm:HomeMaticIP:3014F711A000009398584465"
+    },
+    {
+      "sortOrder": 10,
+      "matrixRoom": "Vincent",
+      "primaryTempId": "zigbee2mqtt/0x00158d00091a459e",
+      "fallbackTempIds": [
+        "hdm:HomeMaticIP:3014F711A000005398584A0F"
+      ],
+      "rccId": "roomClimateControl_hz_12",
+      "valveIds": [
+        "hdm:HomeMaticIP:3014F711A000005398584A0F"
+      ],
+      "humidityId": "zigbee2mqtt/0x00158d00091a459e",
+      "contactId": "hdm:HomeMaticIP:3014F711A000009A185930F2"
+    },
+    {
+      "sortOrder": 11,
+      "matrixRoom": "Keller / Tiefkeller",
+      "primaryTempId": "zigbee2mqtt/0x00158d00091a4176",
+      "fallbackTempIds": [],
+      "rccId": null,
+      "valveIds": [],
+      "humidityId": "zigbee2mqtt/0x00158d00091a4176",
+      "contactId": "hdm:HomeMaticIP:3014F711A000009398584454"
+    }
+  ]
+}
