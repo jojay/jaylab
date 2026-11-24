@@ -222,7 +222,7 @@ function stepApplianceState(deviceId, sample, ctx, config, nowMs) {
     s.cycleStartMs = null;
     s.cycleStartWh = null;
   } else {
-    if (s.stateCode === 0) {
+    if (s.stateCode === 0 && (switchOnVal === 1 || (power !== undefined && power >= startThresholdW))) {
       s.stateCode = 1;
       s.aboveStartSinceMs = null;
       s.belowStopSinceMs = null;

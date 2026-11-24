@@ -373,6 +373,33 @@ test('stepApplianceState isolates multiple devices in shared ctx and handles 5-m
   assert.deepEqual(hb[0].timestamp, new Date(t0 + 300000));
 });
 
+test('stepApplianceState keeps state Aus (0) when switchOn is unknown and power is low or missing', () => {
+  const ctx = {};
+  const cfg = { ...plugsById[WASCHMASCHINE_ID].applianceConfig, deviceName: 'Waschmaschine' };
+  const t0 = 1700000000000;
+
+  const init = stepApplianceState(WASCHMASCHINE_ID, { power: 0, energyWh: 1000, switchOn: 0 }, ctx, cfg, t0);
+  assert.equal(init.length, 1);
+  assert.equal(init[0].fields.stateCode, 0);
+  assert.equal(init[0].fields.stateText, 'Aus');
+
+  // Missing switchOn with low/missing power must NOT spuriously switch Aus (0) -> Bereit (1)
+  assert.deepEqual(
+    stepApplianceState(WASCHMASCHINE_ID, { power: 0, energyWh: 1000 }, ctx, cfg, t0 + 10000),
+    [],
+  );
+  assert.deepEqual(
+    stepApplianceState(WASCHMASCHINE_ID, { energyWh: 1000, switchOn: undefined }, ctx, cfg, t0 + 20000),
+    [],
+  );
+
+  // Heartbeat while Aus (0) and switchOn missing still reports Aus (0)
+  const hb = stepApplianceState(WASCHMASCHINE_ID, { power: 0, energyWh: 1000 }, ctx, cfg, t0 + 300000);
+  assert.equal(hb.length, 1);
+  assert.equal(hb[0].fields.stateCode, 0);
+  assert.equal(hb[0].fields.stateText, 'Aus');
+});
+
 test('buildRoomClimatePoints maps roomClimateControl_hz_1 and all RCC fields cleanly', () => {
   const nowMs = 1700000200000;
   const pts = buildRoomClimatePoints(
