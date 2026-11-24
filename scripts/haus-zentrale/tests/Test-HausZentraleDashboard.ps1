@@ -233,8 +233,17 @@ Assert-Equal $pDoorsStat.options.reduceOptions.fields '/.*/' 'Fenster & Türen s
 $alarmQ = ($pAlarm.targets | ForEach-Object { $_.query }) -join "`n"
 Assert-True ($alarmQ -match 'securityStatus') 'Alarmsystem & Anwesenheit muß securityStatus abfragen'
 
+$aqaraSensors = @($devices.climateSensors | Where-Object { $_.bucket -eq 'zigbee2mqtt' })
+Assert-Equal $aqaraSensors.Count 6 'Erwartet 6 Aqara-Sensoren'
+
 $healthStatQ = ($pHealthStat.targets | ForEach-Object { $_.query }) -join "`n"
 Assert-True ($healthStatQ -match 'deviceHealth' -and $healthStatQ -match 'zigbee2mqtt' -and $healthStatQ -match 'faultCount' -and $healthStatQ -match 'battery') 'Auffällige Geräte muß deviceHealth + zigbee2mqtt prüfen'
+foreach ($aq in $aqaraSensors) {
+    Assert-True ($healthStatQ -match "r\[`"deviceId`"\]\s*==\s*`"$($aq.deviceId)`"") "Auffällige Geräte muß Aqara-Whitelist enthalten: $($aq.deviceId)"
+}
+foreach ($aqField in @('battery', 'voltage', 'linkquality', 'poweroutagecount', 'temp')) {
+    Assert-True ($healthStatQ -match "`"$aqField`"") "Auffällige Geräte muß lastSeen-Feld '$aqField' prüfen"
+}
 
 # 6. Row 2 Detailprüfungen & Review Focus #5
 $pMatrix = $row2Panels | Where-Object { $_.title -eq 'Raum-Matrix (11 Klimaräume)' }
@@ -251,11 +260,20 @@ $t0Query = $pMatrix.targets[0].query
 Assert-True ($t0Query -match 'import\s+"array"' -and $t0Query -match 'array\.from') 'Erstes Target der Raum-Matrix muß array.from für die 11 Räume liefern'
 foreach ($room in $devices.matrixRooms) {
     Assert-True ($t0Query.Contains($room.matrixRoom)) "Raum-Matrix array.from fehlt Raum '$($room.matrixRoom)'"
+    Assert-True ($t0Query -match "Sortierung:\s*$($room.sortOrder)\b") "Raum-Matrix array.from fehlt Sortierung $($room.sortOrder) für '$($room.matrixRoom)'"
 }
 $joinTrans = $pMatrix.transformations | Where-Object { $_.id -eq 'joinByField' } | Select-Object -First 1
 Assert-True ($null -ne $joinTrans) 'Raum-Matrix braucht Transformation joinByField'
 Assert-Equal $joinTrans.options.byField 'Raum' 'joinByField.byField'
 Assert-Equal $joinTrans.options.mode 'outer' 'joinByField.mode'
+
+$calcTrans = $pMatrix.transformations | Where-Object { $_.id -eq 'calculateField' } | Select-Object -First 1
+Assert-True ($null -ne $calcTrans) 'Raum-Matrix braucht Transformation calculateField für Diff °C'
+Assert-Equal $calcTrans.options.alias 'Diff °C' 'calculateField.alias'
+Assert-Equal $calcTrans.options.mode 'binary' 'calculateField.mode'
+Assert-Equal $calcTrans.options.binary.left 'Ist °C' 'calculateField.binary.left'
+Assert-Equal $calcTrans.options.binary.operator '-' 'calculateField.binary.operator'
+Assert-Equal $calcTrans.options.binary.right 'Soll °C' 'calculateField.binary.right'
 
 $sortTrans = $pMatrix.transformations | Where-Object { $_.id -eq 'sortBy' } | Select-Object -First 1
 Assert-True ($null -ne $sortTrans) 'Raum-Matrix braucht Transformation sortBy'
@@ -372,9 +390,22 @@ Assert-True ($shcHealthJson -match 'deviceHealth' -and $shcHealthJson -match 'AV
 $aqDiagJson = $pAqDiag | ConvertTo-Json -Depth 50
 Assert-True ($aqDiagJson -match 'zigbee2mqtt' -and $aqDiagJson -match 'poweroutagecount' -and $aqDiagJson -match 'linkquality' -and $aqDiagJson -match 'voltage' -and $aqDiagJson -match 'battery') 'Aqara-Diagnose unvollständig'
 Assert-True ($aqDiagJson -match '"value":\s*6' -and $aqDiagJson -match '"value":\s*24') 'Aqara-Diagnose braucht Altersschwellen 6 h und 24 h'
+$aqDiagQ = ($pAqDiag.targets | ForEach-Object { $_.query }) -join "`n"
+foreach ($aq in $aqaraSensors) {
+    Assert-True ($aqDiagQ -match "r\[`"deviceId`"\]\s*==\s*`"$($aq.deviceId)`"") "Aqara-Diagnose muß Aqara-Whitelist enthalten: $($aq.deviceId)"
+}
+foreach ($colName in @('Batterie %', 'Spannung mV', 'LQI', 'Neustarts')) {
+    $ov = $pAqDiag.fieldConfig.overrides | Where-Object { $_.matcher.options -eq $colName } | Select-Object -First 1
+    $mapProp = $ov.properties | Where-Object { $_.id -eq 'mappings' } | Select-Object -First 1
+    Assert-True ($null -ne $mapProp -and ($mapProp.value | ConvertTo-Json -Depth 10 -Compress) -match '"-1"') "Aqara-Diagnose '$colName' braucht Sentinel-Mapping für -1"
+}
+$tempDiagOv = $pAqDiag.fieldConfig.overrides | Where-Object { $_.matcher.options -eq 'Letzter Wert °C' } | Select-Object -First 1
+$tempMapProp = $tempDiagOv.properties | Where-Object { $_.id -eq 'mappings' } | Select-Object -First 1
+Assert-True ($null -ne $tempMapProp -and ($tempMapProp.value | ConvertTo-Json -Depth 10 -Compress) -match '"-999"') "Aqara-Diagnose 'Letzter Wert °C' braucht Sentinel-Mapping für -999"
+$ageDiagOv = $pAqDiag.fieldConfig.overrides | Where-Object { $_.matcher.options -eq 'Letzte Meldung (Alter in Std.)' } | Select-Object -First 1
+$ageMapProp = $ageDiagOv.properties | Where-Object { $_.id -eq 'mappings' } | Select-Object -First 1
+Assert-True ($null -ne $ageMapProp -and ($ageMapProp.value | ConvertTo-Json -Depth 10 -Compress) -match '99999') "Aqara-Diagnose 'Letzte Meldung' braucht Range-Mapping für >= 99999"
 
-$aqaraSensors = @($devices.climateSensors | Where-Object { $_.bucket -eq 'zigbee2mqtt' })
-Assert-Equal $aqaraSensors.Count 6 'Erwartet 6 Aqara-Sensoren'
 foreach ($aqTs in @($pAqVolt, $pAqBat, $pAqLqi)) {
     Assert-Equal $aqTs.timeFrom '14d' "$($aqTs.title) muß timeFrom=14d setzen"
     $aqQ = ($aqTs.targets | ForEach-Object { $_.query }) -join "`n"
@@ -398,6 +429,24 @@ foreach ($ts in $allTs) {
     $qAll = ($ts.targets | ForEach-Object { $_.query }) -join "`n"
     Assert-True ($qAll -match '\|\>\s*group\(\)\s*\r?\n\s*\|\>\s*sort\(columns:\s*\["_field",\s*"_time"\]\)\s*\r?\n\s*\|\>\s*group\(columns:\s*\["_field"\]\)') `
         "Deterministische A-Z-Sortierung fehlt in Flux-Abfrage von '$($ts.title)'"
+}
+
+# 11. Flux-Typsicherheit über alle Panels (float-Schreibweise von Node-RED vs int-Vergleiche)
+foreach ($p in $allPanels) {
+    if ($p.type -eq 'row') { continue }
+    foreach ($t in $p.targets) {
+        $q = $t.query
+        Assert-True ($q -notmatch 'r\._value\s*(==|!=|>|<|>=|<=)') `
+            "Ungecasteter Vergleich auf r._value in '$($p.title)' [$($t.refId)]"
+        if ($q -match 'pivot\(') {
+            Assert-True ($q -match '_value:\s*(int|float|string)\(v:\s*r\._value\)') `
+                "pivot() ohne explizites _value-Casting in '$($p.title)' [$($t.refId)]"
+        }
+        if ($q -match 'int\(v:\s*r\.faultCount\)') {
+            Assert-True ($q -match 'int\(v:\s*float\(v:\s*r\.faultCount\)\)') `
+                "faultCount-Parsing muß int(v: float(v: r.faultCount)) verwenden in '$($p.title)'"
+        }
+    }
 }
 
 Write-Output ("BESTANDEN: Dashboard 'jaylab-haus-zentrale' mit {0} Panels in 5 Rows (Rows 3-5 eingeklappt), 0 Überlappungen und allen Geräte-/Farb-/Matrix-Prüfungen verifiziert." -f $allPanels.Count)
