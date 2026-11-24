@@ -362,7 +362,7 @@ from(bucket: "shcbucket")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "applianceState" and r["_field"] == "stateCode" and r["deviceId"] == "$devId")
   |> last()
-  |> map(fn: (r) => ({ _time: r._time, _value: r._value, _field: "Zustand" }))
+  |> map(fn: (r) => ({ _time: r._time, _value: int(v: r._value), _field: "Zustand" }))
   |> group(columns: ["_field"])
 "@
     $qPower = @"
@@ -393,7 +393,7 @@ from(bucket: "shcbucket")
 from(bucket: "shcbucket")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "applianceState" and r["_field"] == "finishedAtEpoch" and r["deviceId"] == "$devId")
-  |> filter(fn: (r) => r._value > 0)
+  |> filter(fn: (r) => float(v: r._value) > 0.0)
   |> last()
   |> map(fn: (r) => ({ _time: r._time, _value: float(v: r._value) * 1000.0, _field: "Letztes Ende" }))
   |> group(columns: ["_field"])
@@ -785,7 +785,7 @@ from(bucket: "shcbucket")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "securityStatus" and r["service"] == "IntrusionDetectionControl" and r["_field"] == "armed")
   |> last()
-  |> map(fn: (r) => ({ _time: r._time, _value: r._value, _field: "Alarmsystem" }))
+  |> map(fn: (r) => ({ _time: r._time, _value: int(v: r._value), _field: "Alarmsystem" }))
   |> group(columns: ["_field"])
 '@
 $qAlarmActive = @'
@@ -793,7 +793,7 @@ from(bucket: "shcbucket")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "securityStatus" and r["service"] == "SurveillanceAlarm" and r["_field"] == "alarmActive")
   |> last()
-  |> map(fn: (r) => ({ _time: r._time, _value: r._value, _field: "Alarmstatus" }))
+  |> map(fn: (r) => ({ _time: r._time, _value: int(v: r._value), _field: "Alarmstatus" }))
   |> group(columns: ["_field"])
 '@
 $qPresence = @'
@@ -801,7 +801,7 @@ from(bucket: "shcbucket")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "securityStatus" and r["service"] == "PresenceSimulationConfiguration" and r["_field"] == "presenceSimEnabled")
   |> last()
-  |> map(fn: (r) => ({ _time: r._time, _value: r._value, _field: "Anwesenheit" }))
+  |> map(fn: (r) => ({ _time: r._time, _value: int(v: r._value), _field: "Anwesenheit" }))
   |> group(columns: ["_field"])
 '@
 $alarmOverrides = @(
@@ -890,8 +890,9 @@ $pAlarm = New-StatPanel -Title 'Alarmsystem & Anwesenheit' `
         (New-FluxTarget -RefId 'C' -Query $qPresence)
     ) -Overrides $alarmOverrides
 
+$aqTempOrExpr = New-FluxDeviceIdOrExpr -DeviceIds @($aqaraSensors | ForEach-Object { $_.deviceId })
 $aqWarnAnchorRows = ($aqaraSensors | ForEach-Object {
-    "  { deviceId: `"$($_.deviceId)`", battery: 0.0, ageH: 99999.0 }"
+    "  { deviceId: `"$($_.deviceId)`", _field: `"seed`", _value: 0.0, ageH: 99999.0 }"
 }) -join ",`n"
 $healthWarnBase = @"
 import "array"
@@ -900,24 +901,31 @@ knownAq = array.from(rows: [
 $aqWarnAnchorRows
 ])
 
-aqBat = from(bucket: "zigbee2mqtt")
+aqBase = from(bucket: "zigbee2mqtt")
   |> range(start: -365d)
-  |> filter(fn: (r) => r["_field"] == "battery")
+  |> filter(fn: (r) => r["_field"] == "battery" or r["_field"] == "voltage" or r["_field"] == "linkquality" or r["_field"] == "poweroutagecount" or r["_field"] == "temp")
+  |> filter(fn: (r) =>
+$aqTempOrExpr)
   |> last()
   |> group()
-  |> map(fn: (r) => ({ deviceId: r.deviceId, battery: float(v: r._value), ageH: float(v: uint(v: now()) - uint(v: r._time)) / 3600000000000.0 }))
+  |> map(fn: (r) => ({
+    deviceId: r.deviceId,
+    _field: r._field,
+    _value: float(v: r._value),
+    ageH: float(v: uint(v: now()) - uint(v: r._time)) / 3600000000000.0
+  }))
 
-aqWarn = union(tables: [knownAq, aqBat])
+aqWarn = union(tables: [knownAq, aqBase])
   |> group(columns: ["deviceId"])
   |> reduce(
-    identity: { battery: 0.0, ageH: 99999.0 },
+    identity: { bat: -1.0, ageH: 99999.0 },
     fn: (r, accumulator) => ({
-      battery: if r.ageH < accumulator.ageH then r.battery else accumulator.battery,
+      bat: if r._field == "battery" then r._value else accumulator.bat,
       ageH: if r.ageH < accumulator.ageH then r.ageH else accumulator.ageH
     })
   )
   |> group()
-  |> map(fn: (r) => ({ deviceId: r.deviceId, warn: if r.ageH > 6.0 or r.battery < 25.0 then 1 else 0 }))
+  |> map(fn: (r) => ({ deviceId: r.deviceId, warn: if r.ageH > 6.0 or r.bat < 25.0 then 1 else 0 }))
   |> filter(fn: (r) => r.warn == 1)
   |> keep(columns: ["deviceId", "warn"])
 
@@ -926,6 +934,7 @@ shcWarn = from(bucket: "shcbucket")
   |> filter(fn: (r) => r["_measurement"] == "deviceHealth" and (r["_field"] == "available" or r["_field"] == "faultCount"))
   |> last()
   |> keep(columns: ["deviceId", "_field", "_value"])
+  |> map(fn: (r) => ({ deviceId: r.deviceId, _field: r._field, _value: int(v: r._value) }))
   |> group(columns: ["deviceId"])
   |> pivot(rowKey: ["deviceId"], columnKey: ["_field"], valueColumn: "_value")
   |> group()
@@ -1112,6 +1121,7 @@ from(bucket: "shcbucket")
   |> filter(fn: (r) => r["_measurement"] == "roomClimate" and (r["_field"] == "hasDemand" or r["_field"] == "boostMode" or r["_field"] == "ventilationMode" or r["_field"] == "summerMode"))
   |> last()
   |> keep(columns: ["room", "_field", "_value"])
+  |> map(fn: (r) => ({ room: r.room, _field: r._field, _value: int(v: r._value) }))
   |> group(columns: ["room"])
   |> pivot(rowKey: ["room"], columnKey: ["_field"], valueColumn: "_value")
   |> group()
@@ -1363,7 +1373,6 @@ $pMatrix = New-TablePanel -Title 'Raum-Matrix (11 Klimaräume)' `
 # --- Temperatur-Verlauf (17 Fühler) ---
 $allTempNameFn = New-FluxDeviceNameFn -Items $climateSensors
 $shcTempOrExpr = New-FluxDeviceIdOrExpr -DeviceIds @($shcClimate | ForEach-Object { $_.deviceId })
-$aqTempOrExpr = New-FluxDeviceIdOrExpr -DeviceIds @($aqaraSensors | ForEach-Object { $_.deviceId })
 $qTempHistory = @"
 $allTempNameFn
 
@@ -1919,7 +1928,7 @@ from(bucket: "shcbucket")
     Raum: r.room,
     Modell: r.deviceModel,
     Status: if exists r.statusText then r.statusText else "UNDEFINED",
-    "Störungen": if exists r.faultCount then int(v: r.faultCount) else 0,
+    "Störungen": if exists r.faultCount then int(v: float(v: r.faultCount)) else 0,
     "Störungsmeldung": if exists r.faultSummary then r.faultSummary else "OK",
     "Alter (Min.)": float(v: uint(v: now()) - uint(v: r._time)) / 60000000000.0
   }))
@@ -1988,6 +1997,8 @@ $aqDiagAnchorRows
 base = from(bucket: "zigbee2mqtt")
   |> range(start: -365d)
   |> filter(fn: (r) => r["_field"] == "battery" or r["_field"] == "voltage" or r["_field"] == "linkquality" or r["_field"] == "poweroutagecount" or r["_field"] == "temp")
+  |> filter(fn: (r) =>
+$aqTempOrExpr)
   |> last()
   |> group()
   |> map(fn: (r) => ({
@@ -1996,7 +2007,6 @@ base = from(bucket: "zigbee2mqtt")
     _value: float(v: r._value),
     ageH: float(v: uint(v: now()) - uint(v: r._time)) / 3600000000000.0
   }))
-  |> filter(fn: (r) => deviceName(id: r.deviceId) != r.deviceId)
 
 union(tables: [anchor, base])
   |> group(columns: ["deviceId"])
@@ -2023,10 +2033,19 @@ union(tables: [anchor, base])
   }))
   |> sort(columns: ["Sensor"])
 "@
+$aqDiagMissingMap = @(
+    [ordered]@{
+        options = [ordered]@{
+            '-1' = [ordered]@{ color = '#6E7681'; index = 0; text = '–' }
+        }
+        type    = 'value'
+    }
+)
 $aqDiagOverrides = @(
     (New-FieldOverride -Name 'Batterie %' -Properties @(
         [ordered]@{ id = 'unit'; value = 'percent' },
         [ordered]@{ id = 'decimals'; value = 0 },
+        [ordered]@{ id = 'mappings'; value = $aqDiagMissingMap },
         [ordered]@{
             id    = 'custom.cellOptions'
             value = [ordered]@{ type = 'color-text' }
@@ -2035,8 +2054,9 @@ $aqDiagOverrides = @(
             id    = 'thresholds'
             value = [ordered]@{
                 mode  = 'absolute'
-                steps = (New-ThresholdSteps -Steps @(
-                    @{ color = '#F2495C'; value = $null },
+                steps = @(New-ThresholdSteps -Steps @(
+                    @{ color = '#6E7681'; value = $null },
+                    @{ color = '#F2495C'; value = 0 },
                     @{ color = '#EAB839'; value = 25 },
                     @{ color = '#73BF69'; value = 50 }
                 ))
@@ -2045,21 +2065,48 @@ $aqDiagOverrides = @(
     )),
     (New-FieldOverride -Name 'Spannung mV' -Properties @(
         [ordered]@{ id = 'unit'; value = 'mvolt' },
-        [ordered]@{ id = 'decimals'; value = 0 }
+        [ordered]@{ id = 'decimals'; value = 0 },
+        [ordered]@{ id = 'mappings'; value = $aqDiagMissingMap }
     )),
     (New-FieldOverride -Name 'LQI' -Properties @(
-        [ordered]@{ id = 'decimals'; value = 0 }
+        [ordered]@{ id = 'decimals'; value = 0 },
+        [ordered]@{ id = 'mappings'; value = $aqDiagMissingMap }
     )),
     (New-FieldOverride -Name 'Neustarts' -Properties @(
-        [ordered]@{ id = 'decimals'; value = 0 }
+        [ordered]@{ id = 'decimals'; value = 0 },
+        [ordered]@{ id = 'mappings'; value = $aqDiagMissingMap }
     )),
     (New-FieldOverride -Name 'Letzter Wert °C' -Properties @(
         [ordered]@{ id = 'unit'; value = 'celsius' },
-        [ordered]@{ id = 'decimals'; value = 2 }
+        [ordered]@{ id = 'decimals'; value = 2 },
+        [ordered]@{
+            id    = 'mappings'
+            value = @(
+                [ordered]@{
+                    options = [ordered]@{
+                        '-999' = [ordered]@{ color = '#6E7681'; index = 0; text = '–' }
+                    }
+                    type    = 'value'
+                }
+            )
+        }
     )),
     (New-FieldOverride -Name 'Letzte Meldung (Alter in Std.)' -Properties @(
         [ordered]@{ id = 'unit'; value = 'h' },
         [ordered]@{ id = 'decimals'; value = 1 },
+        [ordered]@{
+            id    = 'mappings'
+            value = @(
+                [ordered]@{
+                    options = [ordered]@{
+                        from   = 99999
+                        to     = 1000000000
+                        result = [ordered]@{ color = '#F2495C'; index = 0; text = '> 365 d' }
+                    }
+                    type    = 'range'
+                }
+            )
+        },
         [ordered]@{
             id    = 'custom.cellOptions'
             value = [ordered]@{ type = 'color-background' }
@@ -2068,7 +2115,7 @@ $aqDiagOverrides = @(
             id    = 'thresholds'
             value = [ordered]@{
                 mode  = 'absolute'
-                steps = (New-ThresholdSteps -Steps @(
+                steps = @(New-ThresholdSteps -Steps @(
                     @{ color = '#37872D'; value = $null },
                     @{ color = '#EAB839'; value = 6 },
                     @{ color = '#F2495C'; value = 24 }
