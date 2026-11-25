@@ -645,11 +645,13 @@ base = from(bucket: "shcbucket")
   |> group(columns: ["deviceId", "name"])
   |> pivot(rowKey: ["deviceId", "name"], columnKey: ["_field"], valueColumn: "_value")
   |> group()
+  |> sort(columns: ["name"])
 
-anchor = array.from(rows: [{ openCnt: 0, availCnt: 0, unavailCnt: 0, openNames: "", unavailNames: "" }])
+anchor = array.from(rows: [{ deviceId: "_none_", openCnt: 0, availCnt: 0, unavailCnt: 0, openNames: "", unavailNames: "" }])
 
 stats = base
   |> map(fn: (r) => ({
+    deviceId: r.deviceId,
     openCnt: if exists r.isOpen and r.isOpen == 1 then 1 else 0,
     availCnt: if exists r.available and r.available == 1 then 1 else 0,
     unavailCnt: if not exists r.available or r.available != 1 then 1 else 0,
@@ -666,8 +668,8 @@ union(tables: [anchor, stats])
       openCnt: accumulator.openCnt + r.openCnt,
       availCnt: accumulator.availCnt + r.availCnt,
       unavailCnt: accumulator.unavailCnt + r.unavailCnt,
-      openNames: if r.openNames == "" then accumulator.openNames else if accumulator.openNames == "" then r.openNames else accumulator.openNames + ", " + r.openNames,
-      unavailNames: if r.unavailNames == "" then accumulator.unavailNames else if accumulator.unavailNames == "" then r.unavailNames else accumulator.unavailNames + ", " + r.unavailNames
+      openNames: if not exists r.openNames or r.openNames == "" then accumulator.openNames else if accumulator.openNames == "" then r.openNames else accumulator.openNames + ", " + r.openNames,
+      unavailNames: if not exists r.unavailNames or r.unavailNames == "" then accumulator.unavailNames else if accumulator.unavailNames == "" then r.unavailNames else accumulator.unavailNames + ", " + r.unavailNames
     })
   )
 "@
