@@ -229,6 +229,8 @@ $doorsStatQ = ($pDoorsStat.targets | ForEach-Object { $_.query }) -join "`n"
 Assert-True ($doorsStatQ -match 'contactStatus') 'Row 1 Fenster & Türen muß contactStatus abfragen'
 Assert-True ($doorsStatQ -notmatch 'ShutterContact') 'Row 1 Fenster & Türen darf nicht ShutterContact abfragen'
 Assert-Equal $pDoorsStat.options.reduceOptions.fields '/.*/' 'Fenster & Türen stat braucht reduceOptions.fields = /.*/ für Stringwerte'
+Assert-True ($doorsStatQ -match 'deviceId:\s*"_none_"' -and $doorsStatQ -match 'deviceId:\s*r\.deviceId') 'Row 1 Fenster & Türen muß deviceId vor union/reduce erhalten, damit geschlossene Kontakte nicht verworfen werden'
+Assert-True ($doorsStatQ -match 'sort\(columns:\s*\["name"\]\)') 'Row 1 Fenster & Türen muß Kontakte deterministisch nach name sortieren'
 
 $alarmQ = ($pAlarm.targets | ForEach-Object { $_.query }) -join "`n"
 Assert-True ($alarmQ -match 'securityStatus') 'Alarmsystem & Anwesenheit muß securityStatus abfragen'
