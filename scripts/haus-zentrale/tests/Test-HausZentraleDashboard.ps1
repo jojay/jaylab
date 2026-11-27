@@ -1,4 +1,4 @@
-﻿#requires -Version 7.0
+#requires -Version 7.0
 [CmdletBinding()]
 param()
 
@@ -205,6 +205,7 @@ Assert-True ($row2Panels.Count -ge 4) "Row 2 muß mindestens 4 Unter-Panels enth
 
 # 5. Row 1 Detailprüfungen
 $pWashStatus = $row1Panels | Where-Object { $_.title -eq 'Waschmaschine — Status' }
+$pWashDetails = $row1Panels | Where-Object { $_.title -eq 'Waschmaschine — Daten' }
 $pWashCurve = $row1Panels | Where-Object { $_.title -eq 'Waschmaschine — 6h Leistung' }
 $pCreality = $row1Panels | Where-Object { $_.title -eq 'Creality (3D-Drucker)' }
 $pOtherPlugs = $row1Panels | Where-Object { $_.title -eq 'Weitere Steckdosen (ZS Kompressor & Springer)' }
@@ -212,9 +213,30 @@ $pDoorsStat = $row1Panels | Where-Object { $_.title -eq 'Fenster & Türen' }
 $pAlarm = $row1Panels | Where-Object { $_.title -eq 'Alarmsystem & Anwesenheit' }
 $pHealthStat = $row1Panels | Where-Object { $_.title -eq 'Auffällige Geräte' }
 
-foreach ($req in @($pWashStatus, $pWashCurve, $pCreality, $pOtherPlugs, $pDoorsStat, $pAlarm, $pHealthStat)) {
+foreach ($req in @($pWashStatus, $pWashDetails, $pWashCurve, $pCreality, $pOtherPlugs, $pDoorsStat, $pAlarm, $pHealthStat)) {
     Assert-True ($null -ne $req) 'Pflicht-Panel in Row 1 fehlt'
 }
+
+Assert-Equal $pWashStatus.options.colorMode 'background_solid' 'Waschmaschine — Status muß background_solid verwenden'
+Assert-Equal $pWashStatus.options.textMode 'value' 'Waschmaschine — Status muß textMode=value verwenden'
+Assert-Equal $pWashStatus.targets.Count 1 'Waschmaschine — Status darf nur 1 Target (Zustand) haben'
+Assert-True ($pWashStatus.options.text.valueSize -ge 32) 'Waschmaschine — Status braucht große Schrift (valueSize >= 32)'
+
+Assert-Equal $pWashDetails.options.orientation 'vertical' 'Waschmaschine — Daten muß vertical sein'
+Assert-Equal $pWashDetails.options.colorMode 'value' 'Waschmaschine — Daten muß colorMode=value verwenden'
+Assert-Equal $pWashDetails.options.justifyMode 'auto' 'Waschmaschine — Daten muß justifyMode=auto verwenden'
+Assert-Equal $pWashDetails.options.wideLayout $true 'Waschmaschine — Daten muß wideLayout=true verwenden'
+Assert-Equal $pWashDetails.targets.Count 4 'Waschmaschine — Daten braucht 4 Targets (Leistung, Zyklus, Dauer, Letztes Ende)'
+Assert-True ($pWashDetails.options.text.titleSize -ge 15) 'Waschmaschine — Daten braucht titleSize >= 15'
+Assert-True ($pWashDetails.options.text.valueSize -ge 20) 'Waschmaschine — Daten braucht valueSize >= 20'
+$washDetailsJson = $pWashDetails | ConvertTo-Json -Depth 30
+Assert-True ($washDetailsJson -notmatch '#37474F|#2E4A3E') 'Waschmaschine — Daten darf im Modus colorMode=value keine dunklen Hintergrund-Hexfarben verwenden'
+
+Assert-Equal $pDoorsStat.options.orientation 'vertical' "$($pDoorsStat.title) muß orientation=vertical setzen"
+Assert-Equal $pDoorsStat.options.justifyMode 'auto' "$($pDoorsStat.title) muß justifyMode=auto setzen"
+Assert-Equal $pDoorsStat.options.wideLayout $true "$($pDoorsStat.title) muß wideLayout=true setzen"
+Assert-True ($pDoorsStat.options.text.titleSize -ge 14) "$($pDoorsStat.title) braucht titleSize >= 14"
+Assert-True ($pDoorsStat.options.text.valueSize -ge 20) "$($pDoorsStat.title) braucht valueSize >= 20"
 Assert-Equal $pWashCurve.timeFrom '6h' 'Waschmaschine 6h Leistung timeFrom'
 $washQ = ($pWashCurve.targets | ForEach-Object { $_.query }) -join "`n"
 Assert-True ($washQ -match 'powerMeter' -and $washQ -match '3014F711A0000493985923FF') 'Waschmaschine-6h-Kurve muß powerMeter für Waschmaschine abfragen'
@@ -232,14 +254,26 @@ Assert-Equal $pDoorsStat.options.reduceOptions.fields '/.*/' 'Fenster & Türen s
 Assert-True ($doorsStatQ -match 'deviceId:\s*"_none_"' -and $doorsStatQ -match 'deviceId:\s*r\.deviceId') 'Row 1 Fenster & Türen muß deviceId vor union/reduce erhalten, damit geschlossene Kontakte nicht verworfen werden'
 Assert-True ($doorsStatQ -match 'sort\(columns:\s*\["name"\]\)') 'Row 1 Fenster & Türen muß Kontakte deterministisch nach name sortieren'
 
+Assert-Equal $pAlarm.type 'table' 'Alarmsystem & Anwesenheit muß type=table sein'
+Assert-Equal $pAlarm.options.showHeader $false 'Alarmsystem & Anwesenheit muß showHeader=false setzen'
+Assert-Equal $pAlarm.options.cellHeight 'lg' 'Alarmsystem & Anwesenheit muß cellHeight=lg setzen'
+Assert-Equal $pAlarm.targets.Count 1 'Alarmsystem & Anwesenheit braucht 1 gemeinsames Table-Target'
 $alarmQ = ($pAlarm.targets | ForEach-Object { $_.query }) -join "`n"
-Assert-True ($alarmQ -match 'securityStatus') 'Alarmsystem & Anwesenheit muß securityStatus abfragen'
+Assert-True ($alarmQ -match 'securityStatus' -and $alarmQ -match 'IntrusionDetectionControl' -and $alarmQ -match 'SurveillanceAlarm' -and $alarmQ -match 'PresenceSimulationConfiguration') 'Alarmsystem & Anwesenheit muß alle 3 securityStatus-Dienste abfragen'
+$alarmJson = $pAlarm | ConvertTo-Json -Depth 30
+Assert-True ($alarmJson -match 'color-background' -and $alarmJson -match 'Unscharf' -and $alarmJson -match 'Scharf' -and $alarmJson -match 'Kein Alarm' -and $alarmJson -match 'ALARM' -and $alarmJson -match 'Aus' -and $alarmJson -match 'Aktiv') 'Alarmsystem & Anwesenheit braucht color-background und Mappings für alle Zustände'
 
 $aqaraSensors = @($devices.climateSensors | Where-Object { $_.bucket -eq 'zigbee2mqtt' })
 Assert-Equal $aqaraSensors.Count 6 'Erwartet 6 Aqara-Sensoren'
 
+Assert-Equal $pHealthStat.type 'table' 'Auffällige Geräte muß type=table sein'
+Assert-Equal $pHealthStat.options.showHeader $false 'Auffällige Geräte muß showHeader=false setzen'
+Assert-Equal $pHealthStat.options.cellHeight 'lg' 'Auffällige Geräte muß cellHeight=lg setzen'
+Assert-Equal $pHealthStat.targets.Count 1 'Auffällige Geräte braucht 1 gemeinsames Table-Target'
 $healthStatQ = ($pHealthStat.targets | ForEach-Object { $_.query }) -join "`n"
 Assert-True ($healthStatQ -match 'deviceHealth' -and $healthStatQ -match 'zigbee2mqtt' -and $healthStatQ -match 'faultCount' -and $healthStatQ -match 'battery') 'Auffällige Geräte muß deviceHealth + zigbee2mqtt prüfen'
+$healthJson = $pHealthStat | ConvertTo-Json -Depth 30
+Assert-True ($healthJson -match 'color-background' -and $healthJson -match 'Gesamt' -and $healthJson -match 'Bosch SHC' -and $healthJson -match 'Aqara' -and $healthJson -match '"value":\s*1' -and $healthJson -match '"value":\s*3') 'Auffällige Geräte braucht color-background, Bereichsnamen und Schwellwerte 1 und 3'
 foreach ($aq in $aqaraSensors) {
     Assert-True ($healthStatQ -match "r\[`"deviceId`"\]\s*==\s*`"$($aq.deviceId)`"") "Auffällige Geräte muß Aqara-Whitelist enthalten: $($aq.deviceId)"
 }

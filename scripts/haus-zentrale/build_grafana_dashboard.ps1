@@ -1,4 +1,4 @@
-﻿#requires -Version 7.0
+#requires -Version 7.0
 [CmdletBinding()]
 param(
     [string]$OutputPath
@@ -226,7 +226,11 @@ function New-StatPanel {
         [string]$NoValue = '–',
         [object[]]$Mappings = @(),
         [object[]]$ThresholdSteps = @(@{ color = 'green'; value = $null }),
-        [object[]]$Overrides = @()
+        [object[]]$Overrides = @(),
+        [string]$JustifyMode = 'center',
+        [Nullable[bool]]$WideLayout = $null,
+        [Nullable[int]]$TitleSize = $null,
+        [Nullable[int]]$ValueSize = $null
     )
     $defaults = [ordered]@{
         color      = [ordered]@{
@@ -243,6 +247,29 @@ function New-StatPanel {
     if ($null -ne $Decimals) {
         $defaults['decimals'] = $Decimals
     }
+    $textOpts = [ordered]@{}
+    if ($null -ne $TitleSize) {
+        $textOpts['titleSize'] = [int]$TitleSize
+    }
+    if ($null -ne $ValueSize) {
+        $textOpts['valueSize'] = [int]$ValueSize
+    }
+    $options = [ordered]@{
+        colorMode     = $ColorMode
+        graphMode     = $GraphMode
+        justifyMode   = $JustifyMode
+        orientation   = $Orientation
+        reduceOptions = [ordered]@{
+            calcs  = @('lastNotNull')
+            fields = $ReduceFields
+            values = $false
+        }
+        text          = $textOpts
+        textMode      = $TextMode
+    }
+    if ($null -ne $WideLayout) {
+        $options['wideLayout'] = [bool]$WideLayout
+    }
     return [ordered]@{
         datasource  = New-DatasourceRef
         description = $Description
@@ -252,19 +279,7 @@ function New-StatPanel {
         }
         gridPos     = $GridPos
         id          = (Get-NextPanelId)
-        options     = [ordered]@{
-            colorMode     = $ColorMode
-            graphMode     = $GraphMode
-            justifyMode   = 'center'
-            orientation   = $Orientation
-            reduceOptions = [ordered]@{
-                calcs  = @('lastNotNull')
-                fields = $ReduceFields
-                values = $false
-            }
-            text          = [ordered]@{}
-            textMode      = $TextMode
-        }
+        options     = $options
         targets     = @($Targets)
         title       = $Title
         type        = 'stat'
@@ -279,7 +294,9 @@ function New-TablePanel {
         [string]$Description = '',
         [object[]]$Overrides = @(),
         [object[]]$Transformations = @(),
-        [string]$NoValue = '–'
+        [string]$NoValue = '–',
+        [string]$CellHeight = 'sm',
+        [bool]$ShowHeader = $true
     )
     return [ordered]@{
         datasource  = New-DatasourceRef
@@ -308,14 +325,14 @@ function New-TablePanel {
         gridPos         = $GridPos
         id              = (Get-NextPanelId)
         options         = [ordered]@{
-            cellHeight = 'sm'
+            cellHeight = $CellHeight
             footer     = [ordered]@{
                 countRows = $false
                 fields    = ''
                 reducer   = @('sum')
                 show      = $false
             }
-            showHeader = $true
+            showHeader = $ShowHeader
         }
         targets         = @($Targets)
         title           = $Title
@@ -483,6 +500,153 @@ from(bucket: "shcbucket")
         ) -Overrides $overrides
 }
 
+function New-WasherStatusPanels {
+    param(
+        [Parameter(Mandatory)]$Plug
+    )
+    $devId = $Plug.deviceId
+    $runLabel = $Plug.applianceConfig.runningLabel
+
+    $qState = @"
+from(bucket: "shcbucket")
+  |> range(start: -24h)
+  |> filter(fn: (r) => r["_measurement"] == "applianceState" and r["_field"] == "stateCode" and r["deviceId"] == "$devId")
+  |> last()
+  |> map(fn: (r) => ({ _time: r._time, _value: int(v: r._value), _field: "Zustand" }))
+  |> group(columns: ["_field"])
+"@
+    $qPower = @"
+from(bucket: "shcbucket")
+  |> range(start: -24h)
+  |> filter(fn: (r) => r["_measurement"] == "powerMeter" and r["_field"] == "power" and r["deviceId"] == "$devId")
+  |> last()
+  |> map(fn: (r) => ({ _time: r._time, _value: float(v: r._value), _field: "Leistung" }))
+  |> group(columns: ["_field"])
+"@
+    $qCycleKwh = @"
+from(bucket: "shcbucket")
+  |> range(start: -24h)
+  |> filter(fn: (r) => r["_measurement"] == "applianceState" and r["_field"] == "cycleEnergyWh" and r["deviceId"] == "$devId")
+  |> last()
+  |> map(fn: (r) => ({ _time: r._time, _value: float(v: r._value) / 1000.0, _field: "Zyklus" }))
+  |> group(columns: ["_field"])
+"@
+    $qCycleMin = @"
+from(bucket: "shcbucket")
+  |> range(start: -24h)
+  |> filter(fn: (r) => r["_measurement"] == "applianceState" and r["_field"] == "cycleDurationMin" and r["deviceId"] == "$devId")
+  |> last()
+  |> map(fn: (r) => ({ _time: r._time, _value: float(v: r._value), _field: "Dauer" }))
+  |> group(columns: ["_field"])
+"@
+    $qFinished = @"
+from(bucket: "shcbucket")
+  |> range(start: -24h)
+  |> filter(fn: (r) => r["_measurement"] == "applianceState" and r["_field"] == "finishedAtEpoch" and r["deviceId"] == "$devId")
+  |> filter(fn: (r) => float(v: r._value) > 0.0)
+  |> last()
+  |> map(fn: (r) => ({ _time: r._time, _value: float(v: r._value) * 1000.0, _field: "Letztes Ende" }))
+  |> group(columns: ["_field"])
+"@
+
+    $stateMappings = @(
+        [ordered]@{
+            options = [ordered]@{
+                '0' = [ordered]@{ color = '#6E7681'; index = 0; text = 'Aus' }
+                '1' = [ordered]@{ color = '#3274D9'; index = 1; text = 'Bereit' }
+                '2' = [ordered]@{ color = '#FF9830'; index = 2; text = $runLabel }
+                '3' = [ordered]@{ color = '#37872D'; index = 3; text = 'Fertig' }
+            }
+            type    = 'value'
+        }
+    )
+    $stateThresholds = @{
+        mode  = 'absolute'
+        steps = @(New-ThresholdSteps -Steps @(
+            @{ color = '#6E7681'; value = $null },
+            @{ color = '#3274D9'; value = 1 },
+            @{ color = '#FF9830'; value = 2 },
+            @{ color = '#37872D'; value = 3 }
+        ))
+    }
+
+    $pStatus = New-StatPanel -Title 'Waschmaschine — Status' `
+        -Description 'Aktueller Zustand (Aus / Bereit / Läuft / Fertig)' `
+        -GridPos @{ x = 0; y = 1; w = 4; h = 5 } `
+        -ColorMode 'background_solid' -TextMode 'value' -JustifyMode 'center' `
+        -Orientation 'horizontal' -ValueSize 36 -ReduceFields '/.*/' `
+        -Targets @((New-FluxTarget -RefId 'A' -Query $qState)) `
+        -Overrides @(
+            (New-FieldOverride -Name 'Zustand' -Properties @(
+                [ordered]@{ id = 'mappings'; value = @($stateMappings) },
+                [ordered]@{ id = 'thresholds'; value = $stateThresholds }
+            ))
+        )
+
+    $detailOverrides = @(
+        (New-FieldOverride -Name 'Leistung' -Properties @(
+            [ordered]@{ id = 'unit'; value = 'watt' },
+            [ordered]@{ id = 'decimals'; value = 1 },
+            [ordered]@{
+                id    = 'thresholds'
+                value = [ordered]@{
+                    mode  = 'absolute'
+                    steps = @(New-ThresholdSteps -Steps @(
+                        @{ color = 'text'; value = $null },
+                        @{ color = '#FF9830'; value = [double]$Plug.applianceConfig.startThresholdW }
+                    ))
+                }
+            }
+        )),
+        (New-FieldOverride -Name 'Zyklus' -Properties @(
+            [ordered]@{ id = 'unit'; value = 'kwatth' },
+            [ordered]@{ id = 'decimals'; value = 3 },
+            [ordered]@{
+                id    = 'thresholds'
+                value = [ordered]@{
+                    mode  = 'absolute'
+                    steps = @(New-ThresholdSteps -Steps @(@{ color = 'text'; value = $null }))
+                }
+            }
+        )),
+        (New-FieldOverride -Name 'Dauer' -Properties @(
+            [ordered]@{ id = 'unit'; value = 'm' },
+            [ordered]@{ id = 'decimals'; value = 0 },
+            [ordered]@{
+                id    = 'thresholds'
+                value = [ordered]@{
+                    mode  = 'absolute'
+                    steps = @(New-ThresholdSteps -Steps @(@{ color = 'text'; value = $null }))
+                }
+            }
+        )),
+        (New-FieldOverride -Name 'Letztes Ende' -Properties @(
+            [ordered]@{ id = 'unit'; value = 'dateTimeFromNow' },
+            [ordered]@{
+                id    = 'thresholds'
+                value = [ordered]@{
+                    mode  = 'absolute'
+                    steps = @(New-ThresholdSteps -Steps @(@{ color = '#73BF69'; value = $null }))
+                }
+            }
+        ))
+    )
+
+    $pDetails = New-StatPanel -Title 'Waschmaschine — Daten' `
+        -Description 'Aktuelle Leistung, Zyklusenergie, Dauer und letztes Programmende' `
+        -GridPos @{ x = 4; y = 1; w = 6; h = 5 } `
+        -Orientation 'vertical' -ColorMode 'value' -JustifyMode 'auto' `
+        -WideLayout $true -TitleSize 15 -ValueSize 20 -ReduceFields '/.*/' `
+        -Targets @(
+            (New-FluxTarget -RefId 'A' -Query $qPower),
+            (New-FluxTarget -RefId 'B' -Query $qCycleKwh),
+            (New-FluxTarget -RefId 'C' -Query $qCycleMin),
+            (New-FluxTarget -RefId 'D' -Query $qFinished)
+        ) -Overrides $detailOverrides
+
+    return @($pStatus, $pDetails)
+}
+
 # =========================================================================
 # Gerätemengen aus devices.json vorbereiten
 # =========================================================================
@@ -509,9 +673,9 @@ foreach ($s in $climateSensors) { $sensorById[$s.deviceId] = $s }
 # =========================================================================
 $row1 = New-RowPanel -Title 'Auf einen Blick' -Y 0 -Collapsed $false
 
-$pWashStatus = New-ApplianceStatusPanel -Plug $plugWasch -Title 'Waschmaschine — Status' `
-    -Description 'Aktueller Zustand (Aus / Bereit / Läuft / Fertig), Leistung und letzter Waschgang' `
-    -GridPos @{ x = 0; y = 1; w = 10; h = 4 }
+$washPanels = New-WasherStatusPanels -Plug $plugWasch
+$pWashStatus = $washPanels[0]
+$pWashDetails = $washPanels[1]
 
 $washStartW = [double]$plugWasch.applianceConfig.startThresholdW
 $washStopW = [double]$plugWasch.applianceConfig.stopThresholdW
@@ -529,7 +693,7 @@ from(bucket: "shcbucket")
 "@
 $pWashCurve = New-TimeseriesPanel -Title 'Waschmaschine — 6h Leistung' `
     -Description "Leistungsaufnahme der letzten 6 Stunden inkl. Schwellenwerte ($washStopW W / $washStartW W)" `
-    -GridPos @{ x = 0; y = 5; w = 10; h = 6 } `
+    -GridPos @{ x = 0; y = 6; w = 10; h = 7 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qWash6h)) `
     -Unit 'watt' -Min 0 -TimeFrom '6h' `
     -ThresholdStyleMode 'dashed' `
@@ -542,7 +706,7 @@ $pWashCurve = New-TimeseriesPanel -Title 'Waschmaschine — 6h Leistung' `
 
 $pCreality = New-ApplianceStatusPanel -Plug $plugCreality -Title 'Creality (3D-Drucker)' `
     -Description 'Aktueller Druckzustand (Aus / Bereit / Druckt / Fertig), Leistung und letzter Druckzyklus' `
-    -GridPos @{ x = 10; y = 1; w = 6; h = 5 }
+    -GridPos @{ x = 10; y = 1; w = 6; h = 6 }
 
 $otherPlugRows = ($otherPlugs | ForEach-Object {
     "  { deviceId: `"$($_.deviceId)`", name: `"$($_.canonicalName)`", available: -1.0, switchOn: -1.0, power: -1.0 }"
@@ -627,7 +791,7 @@ $plugStatusMappings = @(
 )
 $pOtherPlugs = New-StatPanel -Title 'Weitere Steckdosen (ZS Kompressor & Springer)' `
     -Description 'Aktueller Schaltzustand, Leistung und Erreichbarkeit für ZS Kompressor und Springer' `
-    -GridPos @{ x = 10; y = 6; w = 6; h = 5 } `
+    -GridPos @{ x = 10; y = 7; w = 6; h = 6 } `
     -Orientation 'horizontal' -ReduceFields '/.*/' `
     -Mappings $plugStatusMappings `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qOtherPlugs))
@@ -774,123 +938,88 @@ $doorsOverrides = @(
 
 $pDoorsStat = New-StatPanel -Title 'Fenster & Türen' `
     -Description 'Offene und nicht erreichbare Kontakte aus contactStatus (alle 9 Kontakte)' `
-    -GridPos @{ x = 16; y = 1; w = 8; h = 5 } `
-    -Orientation 'horizontal' -ReduceFields '/.*/' `
+    -GridPos @{ x = 16; y = 1; w = 8; h = 6 } `
+    -Orientation 'vertical' -JustifyMode 'auto' -WideLayout $true -TitleSize 18 -ValueSize 22 -ReduceFields '/.*/' `
     -Targets @(
         (New-FluxTarget -RefId 'A' -Query $qDoorsSummary),
         (New-FluxTarget -RefId 'B' -Query $qDoorsOpen),
         (New-FluxTarget -RefId 'C' -Query $qDoorsUnavail)
     ) -Overrides $doorsOverrides
 
-$qAlarmArmed = @'
-from(bucket: "shcbucket")
+$qAlarmTable = @'
+armed = from(bucket: "shcbucket")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "securityStatus" and r["service"] == "IntrusionDetectionControl" and r["_field"] == "armed")
   |> last()
-  |> map(fn: (r) => ({ _time: r._time, _value: int(v: r._value), _field: "Alarmsystem" }))
-  |> group(columns: ["_field"])
-'@
-$qAlarmActive = @'
-from(bucket: "shcbucket")
+  |> map(fn: (r) => ({
+    ord: 1,
+    Bereich: "Alarmsystem",
+    Status: if int(v: r._value) == 1 then "Scharf" else if int(v: r._value) == 2 then "Aktivierung" else "Unscharf"
+  }))
+
+active = from(bucket: "shcbucket")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "securityStatus" and r["service"] == "SurveillanceAlarm" and r["_field"] == "alarmActive")
   |> last()
-  |> map(fn: (r) => ({ _time: r._time, _value: int(v: r._value), _field: "Alarmstatus" }))
-  |> group(columns: ["_field"])
-'@
-$qPresence = @'
-from(bucket: "shcbucket")
+  |> map(fn: (r) => ({
+    ord: 2,
+    Bereich: "Alarmstatus",
+    Status: if int(v: r._value) == 1 then "ALARM" else "Kein Alarm"
+  }))
+
+presence = from(bucket: "shcbucket")
   |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "securityStatus" and r["service"] == "PresenceSimulationConfiguration" and r["_field"] == "presenceSimEnabled")
   |> last()
-  |> map(fn: (r) => ({ _time: r._time, _value: int(v: r._value), _field: "Anwesenheit" }))
-  |> group(columns: ["_field"])
+  |> map(fn: (r) => ({
+    ord: 3,
+    Bereich: "Anwesenheit",
+    Status: if int(v: r._value) == 1 then "Aktiv" else "Aus"
+  }))
+
+union(tables: [armed, active, presence])
+  |> group()
+  |> sort(columns: ["ord"])
+  |> keep(columns: ["Bereich", "Status"])
 '@
 $alarmOverrides = @(
-    (New-FieldOverride -Name 'Alarmsystem' -Properties @(
-        [ordered]@{
-            id    = 'mappings'
-            value = @(
-                [ordered]@{
-                    options = [ordered]@{
-                        '0' = [ordered]@{ color = '#37872D'; index = 0; text = 'Unscharf' }
-                        '1' = [ordered]@{ color = '#3274D9'; index = 1; text = 'Scharf' }
-                        '2' = [ordered]@{ color = '#FF9830'; index = 2; text = 'Aktivierung' }
-                    }
-                    type    = 'value'
-                }
-            )
-        },
-        [ordered]@{
-            id    = 'thresholds'
-            value = [ordered]@{
-                mode  = 'absolute'
-                steps = (New-ThresholdSteps -Steps @(
-                    @{ color = '#37872D'; value = $null },
-                    @{ color = '#3274D9'; value = 1 },
-                    @{ color = '#FF9830'; value = 2 }
-                ))
-            }
-        }
+    (New-FieldOverride -Name 'Bereich' -Properties @(
+        [ordered]@{ id = 'custom.align'; value = 'left' }
     )),
-    (New-FieldOverride -Name 'Alarmstatus' -Properties @(
+    (New-FieldOverride -Name 'Status' -Properties @(
+        [ordered]@{ id = 'custom.align'; value = 'center' },
+        [ordered]@{
+            id    = 'custom.cellOptions'
+            value = [ordered]@{
+                mode = 'basic'
+                type = 'color-background'
+            }
+        },
         [ordered]@{
             id    = 'mappings'
             value = @(
                 [ordered]@{
                     options = [ordered]@{
-                        '0' = [ordered]@{ color = '#37872D'; index = 0; text = 'Kein Alarm' }
-                        '1' = [ordered]@{ color = '#F2495C'; index = 1; text = 'ALARM' }
+                        'Unscharf'    = [ordered]@{ color = '#37872D'; index = 0 }
+                        'Scharf'      = [ordered]@{ color = '#3274D9'; index = 1 }
+                        'Aktivierung' = [ordered]@{ color = '#FF9830'; index = 2 }
+                        'Kein Alarm'  = [ordered]@{ color = '#37872D'; index = 3 }
+                        'ALARM'       = [ordered]@{ color = '#F2495C'; index = 4 }
+                        'Aus'         = [ordered]@{ color = '#6E7681'; index = 5 }
+                        'Aktiv'       = [ordered]@{ color = '#37872D'; index = 6 }
                     }
                     type    = 'value'
                 }
             )
-        },
-        [ordered]@{
-            id    = 'thresholds'
-            value = [ordered]@{
-                mode  = 'absolute'
-                steps = (New-ThresholdSteps -Steps @(
-                    @{ color = '#37872D'; value = $null },
-                    @{ color = '#F2495C'; value = 1 }
-                ))
-            }
-        }
-    )),
-    (New-FieldOverride -Name 'Anwesenheit' -Properties @(
-        [ordered]@{
-            id    = 'mappings'
-            value = @(
-                [ordered]@{
-                    options = [ordered]@{
-                        '0' = [ordered]@{ color = '#6E7681'; index = 0; text = 'Aus' }
-                        '1' = [ordered]@{ color = '#37872D'; index = 1; text = 'Aktiv' }
-                    }
-                    type    = 'value'
-                }
-            )
-        },
-        [ordered]@{
-            id    = 'thresholds'
-            value = [ordered]@{
-                mode  = 'absolute'
-                steps = (New-ThresholdSteps -Steps @(
-                    @{ color = '#6E7681'; value = $null },
-                    @{ color = '#37872D'; value = 1 }
-                ))
-            }
         }
     ))
 )
-$pAlarm = New-StatPanel -Title 'Alarmsystem & Anwesenheit' `
+$pAlarm = New-TablePanel -Title 'Alarmsystem & Anwesenheit' `
     -Description 'Zustand von Alarmsystem, Sirene und Anwesenheitssimulation' `
-    -GridPos @{ x = 16; y = 6; w = 4; h = 5 } `
-    -Orientation 'vertical' -ReduceFields '/.*/' `
-    -Targets @(
-        (New-FluxTarget -RefId 'A' -Query $qAlarmArmed),
-        (New-FluxTarget -RefId 'B' -Query $qAlarmActive),
-        (New-FluxTarget -RefId 'C' -Query $qPresence)
-    ) -Overrides $alarmOverrides
+    -GridPos @{ x = 16; y = 7; w = 4; h = 6 } `
+    -CellHeight 'lg' -ShowHeader $false `
+    -Targets @((New-FluxTarget -RefId 'A' -Query $qAlarmTable)) `
+    -Overrides $alarmOverrides
 
 $aqTempOrExpr = New-FluxDeviceIdOrExpr -DeviceIds @($aqaraSensors | ForEach-Object { $_.deviceId })
 $aqWarnAnchorRows = ($aqaraSensors | ForEach-Object {
@@ -949,49 +1078,69 @@ shcWarn = from(bucket: "shcbucket")
 zeroAnchor = array.from(rows: [{ deviceId: "_none_", warn: 0 }])
 "@
 
-$qHealthTotal = @"
+$qHealthTable = @"
 $healthWarnBase
-union(tables: [zeroAnchor, aqWarn, shcWarn])
+
+totRow = union(tables: [zeroAnchor, aqWarn, shcWarn])
   |> group()
   |> sum(column: "warn")
-  |> map(fn: (r) => ({ _time: now(), _value: r.warn, _field: "Gesamt" }))
-  |> group(columns: ["_field"])
-"@
-$qHealthShc = @"
-$healthWarnBase
-union(tables: [zeroAnchor, shcWarn])
+  |> map(fn: (r) => ({ ord: 1, Bereich: "Gesamt", Anzahl: int(v: r.warn) }))
+
+shcRow = union(tables: [zeroAnchor, shcWarn])
   |> group()
   |> sum(column: "warn")
-  |> map(fn: (r) => ({ _time: now(), _value: r.warn, _field: "SHC" }))
-  |> group(columns: ["_field"])
-"@
-$qHealthAq = @"
-$healthWarnBase
-union(tables: [zeroAnchor, aqWarn])
+  |> map(fn: (r) => ({ ord: 2, Bereich: "Bosch SHC", Anzahl: int(v: r.warn) }))
+
+aqRow = union(tables: [zeroAnchor, aqWarn])
   |> group()
   |> sum(column: "warn")
-  |> map(fn: (r) => ({ _time: now(), _value: r.warn, _field: "Aqara" }))
-  |> group(columns: ["_field"])
+  |> map(fn: (r) => ({ ord: 3, Bereich: "Aqara", Anzahl: int(v: r.warn) }))
+
+union(tables: [totRow, shcRow, aqRow])
+  |> group()
+  |> sort(columns: ["ord"])
+  |> keep(columns: ["Bereich", "Anzahl"])
 "@
-$pHealthStat = New-StatPanel -Title 'Auffällige Geräte' `
+
+$healthOverrides = @(
+    (New-FieldOverride -Name 'Bereich' -Properties @(
+        [ordered]@{ id = 'custom.align'; value = 'left' }
+    )),
+    (New-FieldOverride -Name 'Anzahl' -Properties @(
+        [ordered]@{ id = 'custom.align'; value = 'center' },
+        [ordered]@{ id = 'decimals'; value = 0 },
+        [ordered]@{
+            id    = 'custom.cellOptions'
+            value = [ordered]@{
+                mode = 'basic'
+                type = 'color-background'
+            }
+        },
+        [ordered]@{
+            id    = 'thresholds'
+            value = [ordered]@{
+                mode  = 'absolute'
+                steps = @(New-ThresholdSteps -Steps @(
+                    @{ color = '#37872D'; value = $null },
+                    @{ color = '#EAB839'; value = 1 },
+                    @{ color = '#F2495C'; value = 3 }
+                ))
+            }
+        }
+    ))
+)
+
+$pHealthStat = New-TablePanel -Title 'Auffällige Geräte' `
     -Description 'Summe nicht erreichbarer/gestörter SHC-Geräte (deviceHealth) und überfälliger/batterieschwacher Aqara-Sensoren (> 6 h oder < 25 %)' `
-    -GridPos @{ x = 20; y = 6; w = 4; h = 5 } `
-    -Orientation 'vertical' -Decimals 0 -ReduceFields '/.*/' `
-    -ThresholdSteps @(
-        @{ color = '#37872D'; value = $null },
-        @{ color = '#EAB839'; value = 1 },
-        @{ color = '#F2495C'; value = 3 }
-    ) `
-    -Targets @(
-        (New-FluxTarget -RefId 'A' -Query $qHealthTotal),
-        (New-FluxTarget -RefId 'B' -Query $qHealthShc),
-        (New-FluxTarget -RefId 'C' -Query $qHealthAq)
-    )
+    -GridPos @{ x = 20; y = 7; w = 4; h = 6 } `
+    -CellHeight 'lg' -ShowHeader $false `
+    -Targets @((New-FluxTarget -RefId 'A' -Query $qHealthTable)) `
+    -Overrides $healthOverrides
 
 # =========================================================================
 # ROW 2: Heizung & Raumklima (collapsed: false)
 # =========================================================================
-$row2 = New-RowPanel -Title 'Heizung & Raumklima' -Y 11 -Collapsed $false
+$row2 = New-RowPanel -Title 'Heizung & Raumklima' -Y 13 -Collapsed $false
 
 # --- Raum-Matrix (11 Klimaräume) ---
 $matrixOrderRows = ($matrixRooms | ForEach-Object {
@@ -1360,7 +1509,7 @@ $matrixOverrides = @(
 
 $pMatrix = New-TablePanel -Title 'Raum-Matrix (11 Klimaräume)' `
     -Description 'Live-Übersicht aller 11 Klimaräume in Stockwerksreihenfolge (24h-Frischeregel für Aqara, Raumthermostat primär in E2 Wohn-/Eßzimmer)' `
-    -GridPos @{ x = 0; y = 12; w = 24; h = 13 } `
+    -GridPos @{ x = 0; y = 14; w = 24; h = 13 } `
     -Targets @(
         (New-FluxTarget -RefId 'A' -Query $qMatrixRooms),
         (New-FluxTarget -RefId 'B' -Query $qMatrixIst),
@@ -1406,7 +1555,7 @@ $tempOverrides = @($climateSensors | Sort-Object canonicalName | ForEach-Object 
 })
 $pTempHistory = New-TimeseriesPanel -Title 'Temperatur-Verlauf' `
     -Description 'Alle 17 Temperaturfühler (11 Bosch SHC + 6 Aqara) mit kanonischen Namen und festen Farben' `
-    -GridPos @{ x = 0; y = 25; w = 24; h = 14 } `
+    -GridPos @{ x = 0; y = 27; w = 24; h = 14 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qTempHistory)) `
     -Unit 'celsius' -Overrides $tempOverrides
 
@@ -1433,7 +1582,7 @@ $valveOverrides = @($trvSensors | Sort-Object canonicalName | ForEach-Object {
 })
 $pValveHistory = New-TimeseriesPanel -Title 'Ventilstellung' `
     -Description 'Ventilöffnung aller 10 Heizkörperthermostate (0–100 %)' `
-    -GridPos @{ x = 0; y = 39; w = 12; h = 12 } `
+    -GridPos @{ x = 0; y = 41; w = 12; h = 12 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qValveHistory)) `
     -Unit 'percent' -Min 0 -Max 100 -Overrides $valveOverrides
 
@@ -1471,7 +1620,7 @@ $humOverrides = @($humiditySensors | Sort-Object canonicalName | ForEach-Object 
 })
 $pHumHistory = New-TimeseriesPanel -Title 'Luftfeuchtigkeit' `
     -Description 'Alle 7 Feuchtesensoren inkl. hinterlegter Komfortzone 40–60 %' `
-    -GridPos @{ x = 12; y = 39; w = 12; h = 12 } `
+    -GridPos @{ x = 12; y = 41; w = 12; h = 12 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qHumHistory)) `
     -Unit 'humidity' -Min 0 -Max 100 `
     -ThresholdStyleMode 'area' `
@@ -1509,7 +1658,7 @@ $plugOrExpr)
 "@
 $pPlugPowerTs = New-TimeseriesPanel -Title 'Leistungsverlauf (W)' `
     -Description 'Momentane Leistungsaufnahme aller 4 Smart-Steckdosen' `
-    -GridPos @{ x = 0; y = 52; w = 12; h = 10 } `
+    -GridPos @{ x = 0; y = 54; w = 12; h = 10 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qPlugPowerTs)) `
     -Unit 'watt' -Min 0 -Overrides $plugColorOverrides
 
@@ -1531,7 +1680,7 @@ $plugOrExpr)
 "@
 $pPlugEnergyTs = New-TimeseriesPanel -Title 'Energieverbrauch je Zeitraum (kWh)' `
     -Description 'Stündlicher Energieverbrauch aus Zählerdifferenz (geschützt gegen Zähler-Rücksetzungen)' `
-    -GridPos @{ x = 12; y = 52; w = 12; h = 10 } `
+    -GridPos @{ x = 12; y = 54; w = 12; h = 10 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qPlugEnergyTs)) `
     -Unit 'kwatth' -Min 0 -DrawStyle 'bars' -FillOpacity 65 `
     -LegendCalcs @('sum', 'lastNotNull', 'max') -Overrides $plugColorOverrides
@@ -1730,7 +1879,7 @@ $plugTableOverrides = @(
 
 $pPlugTable = New-TablePanel -Title 'Verbraucher-Übersicht' `
     -Description 'Schaltzustand, aktuelle Leistung, letzter Wasch-/Druckzyklus und Gesamtzählerstand aller 4 Steckdosen' `
-    -GridPos @{ x = 0; y = 62; w = 24; h = 7 } `
+    -GridPos @{ x = 0; y = 64; w = 24; h = 7 } `
     -Targets @(
         (New-FluxTarget -RefId 'A' -Query $qPlugTableSeed),
         (New-FluxTarget -RefId 'B' -Query $qPlugTableSwitch),
@@ -1742,7 +1891,7 @@ $pPlugTable = New-TablePanel -Title 'Verbraucher-Übersicht' `
     ) `
     -Transformations $plugTableTransformations -Overrides $plugTableOverrides
 
-$row3 = New-RowPanel -Title 'Energie & Verbraucher' -Y 51 -Collapsed $true `
+$row3 = New-RowPanel -Title 'Energie & Verbraucher' -Y 53 -Collapsed $true `
     -ChildPanels @($pPlugPowerTs, $pPlugEnergyTs, $pPlugTable)
 
 # =========================================================================
@@ -1792,7 +1941,7 @@ $pContactTimeline = [ordered]@{
         }
         overrides = @()
     }
-    gridPos         = @{ x = 0; y = 53; w = 24; h = 9 }
+    gridPos         = @{ x = 0; y = 55; w = 24; h = 9 }
     id              = (Get-NextPanelId)
     options         = [ordered]@{
         alignValue  = 'left'
@@ -1827,7 +1976,7 @@ from(bucket: "zigbee2mqtt")
 '@
 $pPressNow = New-StatPanel -Title 'Luftdruck (aktuell)' `
     -Description 'Aktueller Mittelwert der aktiven Aqara-Sensoren' `
-    -GridPos @{ x = 0; y = 62; w = 4; h = 8 } `
+    -GridPos @{ x = 0; y = 64; w = 4; h = 8 } `
     -Unit 'pressurehpa' -Decimals 1 -ColorMode 'value' `
     -ThresholdSteps @(@{ color = '#5794F2'; value = $null }) `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qPressNow))
@@ -1868,7 +2017,7 @@ union(tables: [anchor, nowP, oldP])
 '@
 $pPressTrend = New-StatPanel -Title 'Luftdruck 3h-Tendenz' `
     -Description 'Luftdruckänderung der letzten 3 Stunden (hPa)' `
-    -GridPos @{ x = 4; y = 62; w = 4; h = 8 } `
+    -GridPos @{ x = 4; y = 64; w = 4; h = 8 } `
     -Unit 'pressurehpa' -Decimals 1 -ColorMode 'value' `
     -ThresholdSteps @(
         @{ color = '#FF9830'; value = $null },
@@ -1898,11 +2047,11 @@ $aqTempOrExpr)
 "@
 $pPress7d = New-TimeseriesPanel -Title 'Luftdruck 7-Tage-Verlauf' `
     -Description '7-Tage-Luftdruckverlauf der Aqara-Sensoren' `
-    -GridPos @{ x = 8; y = 62; w = 16; h = 8 } `
+    -GridPos @{ x = 8; y = 64; w = 16; h = 8 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qPress7d)) `
     -Unit 'pressurehpa' -TimeFrom '7d' -Overrides $aqaraColorOverrides
 
-$row4 = New-RowPanel -Title 'Türen, Fenster & Wetter' -Y 52 -Collapsed $true `
+$row4 = New-RowPanel -Title 'Türen, Fenster & Wetter' -Y 54 -Collapsed $true `
     -ChildPanels @($pContactTimeline, $pPressNow, $pPressTrend, $pPress7d)
 
 # =========================================================================
@@ -1980,7 +2129,7 @@ $shcHealthOverrides = @(
 )
 $pShcHealth = New-TablePanel -Title 'SHC-Gerätegesundheit' `
     -Description 'Alle 25 physischen Bosch-SHC-Geräte (inkl. Springer und Außenkamera 3yes) mit Status und Störungsmeldungen' `
-    -GridPos @{ x = 0; y = 54; w = 24; h = 11 } `
+    -GridPos @{ x = 0; y = 56; w = 24; h = 11 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qShcHealth)) `
     -Overrides $shcHealthOverrides
 
@@ -2128,7 +2277,7 @@ $aqDiagOverrides = @(
 )
 $pAqDiag = New-TablePanel -Title 'Aqara-Diagnose' `
     -Description 'Letzte Meldung, Batteriestand, Spannung, LQI und Neustarts je Aqara-Sensor (inkl. Langzeit-Stummschaltung > 24 h)' `
-    -GridPos @{ x = 0; y = 65; w = 24; h = 8 } `
+    -GridPos @{ x = 0; y = 67; w = 24; h = 8 } `
     -Targets @((New-FluxTarget -RefId 'A' -Query $qAqDiag)) `
     -Overrides $aqDiagOverrides
 
@@ -2160,13 +2309,13 @@ $aqTempOrExpr)
 }
 
 $pAqVolt = New-AqaraDiagTimeseries -Title 'Aqara Batteriespannung' -FieldName 'voltage' -Unit 'mvolt' `
-    -GridPos @{ x = 0; y = 73; w = 8; h = 10 }
+    -GridPos @{ x = 0; y = 75; w = 8; h = 10 }
 $pAqBat = New-AqaraDiagTimeseries -Title 'Aqara Batterie in %' -FieldName 'battery' -Unit 'percent' `
-    -GridPos @{ x = 8; y = 73; w = 8; h = 10 }
+    -GridPos @{ x = 8; y = 75; w = 8; h = 10 }
 $pAqLqi = New-AqaraDiagTimeseries -Title 'Aqara Funkqualität (LQI)' -FieldName 'linkquality' -Unit 'none' `
-    -GridPos @{ x = 16; y = 73; w = 8; h = 10 }
+    -GridPos @{ x = 16; y = 75; w = 8; h = 10 }
 
-$row5 = New-RowPanel -Title 'Sensoren & Technik' -Y 53 -Collapsed $true `
+$row5 = New-RowPanel -Title 'Sensoren & Technik' -Y 55 -Collapsed $true `
     -ChildPanels @($pShcHealth, $pAqDiag, $pAqVolt, $pAqBat, $pAqLqi)
 
 # =========================================================================
@@ -2203,6 +2352,7 @@ $dashboard = [ordered]@{
     panels              = @(
         $row1,
         $pWashStatus,
+        $pWashDetails,
         $pWashCurve,
         $pCreality,
         $pOtherPlugs,
