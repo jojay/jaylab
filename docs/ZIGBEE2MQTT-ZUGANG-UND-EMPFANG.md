@@ -156,3 +156,12 @@ prüfen; nicht das Zigbee-Netz löschen oder pauschal neu pairen.
 Die bestehende Einstellung `permit_join: true` wurde unverändert vorgefunden.
 Das offene Beitrittsfenster ist eine gesondert zu entscheidende
 Betriebseinstellung, kein erforderlicher Bestandteil der Empfangsprüfung.
+
+## Zweiten Sonoff-Dongle als Router verwenden
+
+Der Betreiber meldet für den ungenutzten Zweitstick die Gehäusekennung
+`2APN5ZBD-P`, passend zum Sonoff ZBDongle-P mit TI-CC2652P. Eine Anleitung zum
+Flashen der passenden Router-Firmware, zum Beitritt ins vorhandene Netz und zur
+Abnahme steht unter [Sonoff ZBDongle-P als Router](ZIGBEE-SONOFF-ZBDONGLE-P-ROUTER.md).
+Die Firmware wurde nicht geflasht; Coordinator und laufendes Netz blieben
+unverändert.
